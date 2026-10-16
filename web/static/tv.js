@@ -73,17 +73,25 @@
     );
   }
 
+  // Clips are rendered as .webm (VP9) and .mp4 (H.264); use whichever this browser plays.
+  const clipExt = (() => {
+    const v = document.createElement('video');
+    return v.canPlayType('video/webm; codecs="vp9"') ? 'webm' : 'mp4';
+  })();
+  const ENTRANCE = 1.7; // seconds until the products have settled in place
+
   function showScene(i) {
     S.sceneIdx = i;
     S.sceneStart = performance.now();
     const next = 1 - S.layer;
     const el = S.layers[next];
-    el.src = scene().svg_url;
-    el.classList.remove('kenburns');
-    void el.offsetWidth;
-    el.classList.add('kenburns');
+    el.poster = scene().svg_url;
+    el.src = `${scene().video_url}.${clipExt}`;
+    el.currentTime = 0;
+    el.play().catch(() => {});
     el.classList.add('on');
     S.layers[S.layer].classList.remove('on');
+    S.layers[S.layer].pause();
     S.layer = next;
   }
 
@@ -101,23 +109,40 @@
   function tick() {
     if (!S.ads.length || S.paused) return;
     const secs = ad().seconds_per_scene * 1000;
-    const t = performance.now() - S.sceneStart;
+    const v = S.layers[S.layer];
+    const playing = v.readyState >= 2 && !v.error;
+    const t = playing ? v.currentTime * 1000 : performance.now() - S.sceneStart;
     const total = ad().scenes.length;
     $('progress').firstElementChild.style.width = (((S.sceneIdx + Math.min(t / secs, 1)) / total) * 100).toFixed(1) + '%';
-    if (t >= secs) showScene((S.sceneIdx + 1) % total);
+    if (t >= secs - 60 || v.ended) showScene((S.sceneIdx + 1) % total);
   }
   setInterval(tick, 100);
 
   function pause(on) {
     S.paused = on;
     $('screen').classList.toggle('paused', on);
-    if (!on) S.sceneStart = performance.now() - 1500; // resume without a long wait
+    const v = S.layers[S.layer];
+    if (on) {
+      v.pause();
+      // Pausing during the entrance would freeze products mid-slide, so settle on the finished frame.
+      if (v.readyState >= 1 && v.currentTime < ENTRANCE) v.currentTime = ENTRANCE;
+    } else {
+      S.sceneStart = performance.now() - v.currentTime * 1000;
+      v.play().catch(() => {});
+    }
+  }
+
+  // After pausing we may seek to the settled frame; wait for it before capturing.
+  function frameReady() {
+    const v = S.layers[S.layer];
+    if (!v.seeking) return Promise.resolve();
+    return new Promise((done) => { v.addEventListener('seeked', done, { once: true }); setTimeout(done, 1500); });
   }
 
   // Capture the frame the viewer is looking at as a JPEG data URL.
   function captureFrame() {
     const el = S.layers[S.layer];
-    if (!el.complete || !el.naturalWidth) return null;
+    if (el.readyState < 2 || !el.videoWidth) return null;
     const c = document.createElement('canvas');
     c.width = 1280; c.height = 720;
     c.getContext('2d').drawImage(el, 0, 0, 1280, 720);
@@ -163,6 +188,7 @@
       h('div', { class: 'cards many' }, [1, 2, 3].map(() => h('div', { class: 'skeleton', style: 'height:250px' }))),
     );
     try {
+      await frameReady();
       const frame = S.cfg.live_ai ? captureFrame() : null;
       const res = await api('/api/analyze', { session_id: S.session.id, scene_id: scene().id, frame });
       if (req !== S.req) return;
@@ -648,7 +674,8 @@
       const sess = await api('/api/sessions', { ad_id: S.ads[0].id });
       S.session = sess.session; S.mobileUrl = sess.mobile_url; S.qrUrl = sess.qr_url;
       for (let i = 0; i < 2; i++) {
-        const l = h('img', { class: 'layer', alt: '', width: 1280, height: 720 });
+        const l = h('video', { class: 'layer', muted: '', playsinline: '', preload: 'auto', 'aria-hidden': 'true' });
+        l.muted = true;
         $('screen').append(l); S.layers.push(l);
       }
       startAd(0);

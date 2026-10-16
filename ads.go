@@ -38,6 +38,7 @@ type Scene struct {
 	Items    []Placement `json:"-"`
 	Expected []Expected  `json:"expected"`
 	SVGURL   string      `json:"svg_url"`
+	VideoURL string      `json:"video_url"` // clip without extension; the TV page picks .webm or .mp4
 }
 
 type Ad struct {
@@ -87,6 +88,7 @@ func buildAds(cat *Catalog) []*Ad {
 		for _, sc := range ad.Scenes {
 			sc.AdID = ad.ID
 			sc.SVGURL = "/scenes/" + sc.ID + ".svg"
+			sc.VideoURL = "/video/" + sc.ID
 			for _, it := range sc.Items {
 				exp := Expected{Category: it.Category}
 				if it.ProductID != "" {

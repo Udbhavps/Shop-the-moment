@@ -8,6 +8,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -260,7 +261,8 @@ func testServer(t *testing.T, g *Gemini) (*httptest.Server, *Server) {
 	web := fstest.MapFS{
 		"tv.html": {Data: []byte("tv")}, "mobile.html": {Data: []byte("mobile")},
 		"dashboard.html": {Data: []byte("dash")}, "eval.html": {Data: []byte("eval")}, "pay.html": {Data: []byte("pay")},
-		"static/app.css": {Data: []byte("x")},
+		"static/app.css":           {Data: []byte("x")},
+		"video/morning-run-1.webm": {Data: []byte("0123456789")}, "video/notes.txt": {Data: []byte("no")},
 	}
 	s := NewServer(mustCatalog(t), NewStore(), g, web)
 	ts := httptest.NewServer(s.Routes())
@@ -515,5 +517,43 @@ func TestQRRejectsTooLong(t *testing.T) {
 	svg, err := QRSVG("https://example.com/m/abcd2345")
 	if err != nil || !strings.HasPrefix(svg, "<svg") {
 		t.Fatalf("svg: %v", err)
+	}
+}
+
+func TestVideoClips(t *testing.T) {
+	ts, _ := testServer(t, nil)
+
+	// scenes advertise their clip
+	_, out := call(t, "GET", ts.URL+"/api/ads", nil)
+	sc := out["ads"].([]any)[0].(map[string]any)["scenes"].([]any)[0].(map[string]any)
+	if sc["video_url"] != "/video/morning-run-1" {
+		t.Fatalf("video_url: %v", sc["video_url"])
+	}
+
+	get := func(path, rng string) *http.Response {
+		req, _ := http.NewRequest("GET", ts.URL+path, nil)
+		if rng != "" {
+			req.Header.Set("Range", rng)
+		}
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { res.Body.Close() })
+		return res
+	}
+	if res := get("/video/morning-run-1.webm", ""); res.StatusCode != 200 || res.Header.Get("Content-Type") != "video/webm" {
+		t.Fatalf("clip: %d %q", res.StatusCode, res.Header.Get("Content-Type"))
+	}
+	// browsers seek with Range requests
+	res := get("/video/morning-run-1.webm", "bytes=2-4")
+	body, _ := io.ReadAll(res.Body)
+	if res.StatusCode != 206 || string(body) != "234" {
+		t.Fatalf("range: %d %q", res.StatusCode, body)
+	}
+	for _, p := range []string{"/video/notes.txt", "/video/missing.mp4", "/video/..%2Fstatic%2Fapp.css"} {
+		if res := get(p, ""); res.StatusCode != 404 {
+			t.Fatalf("%s should be 404, got %d", p, res.StatusCode)
+		}
 	}
 }

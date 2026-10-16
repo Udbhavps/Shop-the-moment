@@ -92,7 +92,7 @@ Sessions are in memory, so the service must run with `--max-instances=1` (the sc
 ## Status, honestly
 - Tested: catalog grounding, agent tools, session/cart/checkout, QR encoder (decoded with OpenCV), HTTP API, and the full browser flow in headless Chromium (`scripts/e2e.mjs`).
 - Not yet tested: the real Vertex AI calls. They were exercised only against a fake server, because the build sandbox had no Google Cloud credentials. Run the `/eval` page on your deployment in live mode first.
-- The sample ads are synthetic vector scenes, so accuracy numbers show the pipeline works on a controlled set, not real footage.
+- The sample ads are animated vector scenes rendered to video (`web/video/`, regenerate with `scripts/render_videos.mjs`), so accuracy numbers show the pipeline works on a controlled set, not real footage. Products stay still after a 1.7 second entrance.
 
 ## API
 `GET /api/config, /api/ads, /api/catalog, /api/products/{id}, /api/analytics, /api/events`

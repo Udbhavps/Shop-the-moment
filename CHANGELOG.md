@@ -3,6 +3,18 @@
 Versioning: [Semantic Versioning](https://semver.org). Each release is a git tag `vX.Y.Z` and a section below.
 Pre-1.0: minor versions may change behaviour; patch versions are fixes only.
 
+## [0.3.0] - 2026-10-16
+
+### Added
+- The sample ads now play as video. Each of the six scenes is a 7-second clip (products slide in, a light streak crosses, dust drifts), served from `/video/{scene}.webm|.mp4` with range support. The TV page picks WebM or MP4 by browser support.
+- `full-<ad>.mp4`: one continuous file per ad, handy for screen recording and the demo video.
+- `scripts/render_videos.mjs` re-renders the clips from the vector scenes (needs Playwright and ffmpeg).
+- Pausing during the entrance settles on the finished frame, so detection boxes line up with the products.
+
+### Known limits
+- Clips are animated vector art made for this demo, not live-action footage. Products stand still after the first 1.7 seconds, so one set of boxes per scene is accurate. Moving products would need per-timestamp boxes.
+- No soundtrack.
+
 ## [0.2.0] - 2026-10-16
 
 ### Added
