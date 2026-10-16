@@ -1,0 +1,12 @@
+.runbtn { min-height: 48px; padding: 0 22px; border: 0; border-radius: 12px; background: var(--focus); color: #2b2100; font-weight: 700; font-size: 17px; }
+.runbtn[disabled] { opacity: .5; }
+.sumgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.sumgrid > div { background: var(--panel); border-radius: 14px; padding: 14px 16px; }
+.sumgrid b { display: block; font-size: 30px; }
+.sumgrid span { color: var(--muted); font-size: 15px; }
+.scene { background: var(--panel); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
+.scene h3 { margin: 0 0 8px; font-size: 18px; }
+.scene table { width: 100%; border-collapse: collapse; }
+.scene th, .scene td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); font-size: 15px; }
+.ok { color: var(--exact); font-weight: 700; }
+.bad { color: var(--danger); font-weight: 700; }

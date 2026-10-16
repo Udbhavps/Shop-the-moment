@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Accuracy check - Shop the Moment</title>
+  <link rel="stylesheet" href="/static/base.css">
+  <link rel="stylesheet" href="/static/dashboard.css">
+  <link rel="stylesheet" href="/static/eval.css">
+</head>
+<body class="dash">
+  <header>
+    <h1>Accuracy check</h1>
+    <p id="mode" class="sub">Loading</p>
+    <button id="run" class="runbtn" type="button" disabled>Run on all scenes</button>
+  </header>
+  <main>
+    <section aria-labelledby="sum-h"><h2 id="sum-h">Summary</h2><div id="summary" class="sumgrid"></div><p id="caveat" class="sub"></p></section>
+    <section aria-labelledby="det-h"><h2 id="det-h">By scene</h2><div id="scenes"></div></section>
+  </main>
+  <script src="/static/eval.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Advertiser view - Shop the Moment</title>
+  <link rel="stylesheet" href="/static/base.css">
+  <link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body class="dash">
+  <header>
+    <h1>Advertiser view</h1>
+    <p>What viewers did after the ad paused. This prototype is not connected to any real ad system.</p>
+  </header>
+  <main>
+    <section aria-labelledby="live-h">
+      <h2 id="live-h">Live from this demo <span class="tag live">Real events</span></h2>
+      <p id="live-note" class="sub"></p>
+      <div id="live" class="funnel"></div>
+      <div id="live-branch" class="branches"></div>
+    </section>
+    <section aria-labelledby="sim-h">
+      <h2 id="sim-h">Sample campaign <span class="tag sim">Simulated</span></h2>
+      <p id="sim-note" class="sub"></p>
+      <div id="sim" class="funnel sim"></div>
+      <div id="sim-branch" class="branches sim"></div>
+    </section>
+    <section aria-labelledby="feed-h">
+      <h2 id="feed-h">Latest events</h2>
+      <ol id="feed" class="feed"><li class="sub">No events yet. Run the demo on the TV page.</li></ol>
+    </section>
+  </main>
+  <script src="/static/dashboard.js" defer></script>
+</body>
+</html>

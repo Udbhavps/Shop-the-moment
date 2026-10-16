@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shop the Moment</title>
+  <link rel="stylesheet" href="/static/base.css">
+  <link rel="stylesheet" href="/static/tv.css">
+</head>
+<body class="tv">
+  <div id="stage">
+    <div id="viewport">
+      <div id="screen" role="img" aria-label="Sample TV ad"></div>
+      <div id="boxes"></div>
+      <div id="progress"><i></i></div>
+    </div>
+
+    <div id="caption" aria-live="polite"></div>
+
+    <div id="adbar" role="group" aria-label="Sample ads"></div>
+
+    <button id="invite" type="button"><kbd>OK</kbd> Shop this scene</button>
+
+    <aside id="panel" aria-label="Shopping panel">
+      <header>
+        <h1 id="ptitle">In this scene</h1>
+        <button id="phonebtn" type="button" data-n="0">Continue on phone</button>
+        <div class="source" id="source"></div>
+      </header>
+      <div id="body"></div>
+      <div id="ask">
+        <div id="reply" aria-live="polite"></div>
+        <div class="src" id="replysrc"></div>
+        <div class="suggest" id="suggest"></div>
+        <form id="askform" autocomplete="off">
+          <input id="askinput" type="text" maxlength="300" placeholder="Ask about colour, price or style" aria-label="Ask about these products">
+          <button type="submit">Ask</button>
+        </form>
+      </div>
+    </aside>
+
+    <div id="hints" aria-hidden="true">
+      <span><kbd>Enter</kbd> Select</span>
+      <span><kbd>Arrows</kbd> Move</span>
+      <span><kbd>Esc</kbd> Back</span>
+    </div>
+
+    <div id="handoff" role="dialog" aria-modal="true" aria-labelledby="hand-title">
+      <div class="handoff-card">
+        <div class="qr"><img id="qrimg" alt="QR code that opens your shortlist on your phone" width="450" height="450"></div>
+        <div>
+          <h2 id="hand-title">Scan to continue on your phone</h2>
+          <p>Your picks and any cart changes follow you. Nothing is charged: checkout in this demo is simulated.</p>
+          <div class="phone" id="phonestate"><span class="dot"></span><span id="phonetext">Waiting for your phone</span></div>
+          <div class="queue" id="queue" aria-label="Items sent to your phone"></div>
+          <p class="url" id="mobileurl"></p>
+          <div class="actions">
+            <button class="btn primary" id="handdone" type="button">Back to the ad</button>
+            <a class="btn" id="openphone" target="_blank" rel="noopener" href="#" style="text-decoration:none">Open phone view here</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="pay" role="dialog" aria-modal="true" aria-labelledby="pay-title"></div>
+  </div>
+  <script src="/static/tv.js" defer></script>
+</body>
+</html>

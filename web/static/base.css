@@ -1,0 +1,35 @@
+/* Shop the Moment - shared tokens.
+   Two border styles carry meaning everywhere: a solid outline means the item is
+   a confirmed catalog match, a dashed outline means it is only similar. */
+:root {
+  --ink: #0e1118;
+  --panel: #171c28;
+  --panel-2: #1f2635;
+  --line: #2f384c;
+  --text: #eef1f6;
+  --muted: #a3adc2;
+  --exact: #4fd1a5;
+  --similar: #a3afff;
+  --focus: #ffc857;
+  --danger: #ff8a7a;
+  --font: "Avenir Next", "Segoe UI Variable Display", "Segoe UI", "Helvetica Neue", system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+img { display: block; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+:focus-visible { outline: 4px solid var(--focus); outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

@@ -1,0 +1,28 @@
+body.dash { overflow: auto; height: auto; min-height: 100%; }
+.dash header, .dash main { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+.dash header { padding-top: 36px; }
+.dash h1 { margin: 0 0 6px; font-size: 34px; letter-spacing: -0.02em; }
+.dash header p, .sub { color: var(--muted); margin: 0 0 14px; line-height: 1.4; }
+main { padding-bottom: 60px; }
+section { margin-top: 34px; }
+h2 { font-size: 21px; margin: 0 0 6px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.tag { font-size: 14px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+.tag.live { background: var(--exact); color: #06281d; }
+.tag.sim { background: transparent; color: var(--similar); border: 2px dashed var(--similar); }
+.funnel { display: flex; flex-direction: column; gap: 10px; }
+.stage { display: grid; grid-template-columns: 190px 1fr 120px; gap: 14px; align-items: center; }
+.stage .name { font-weight: 600; }
+.bar { height: 30px; background: var(--panel); border-radius: 8px; overflow: hidden; }
+.bar > i { display: block; height: 100%; min-width: 3px; background: var(--exact); border-radius: 8px; transition: width .4s; }
+.sim .bar > i { background: repeating-linear-gradient(135deg, var(--similar) 0 8px, #6f7bd6 8px 16px); }
+.stage .val { text-align: right; font-weight: 700; }
+.stage .val small { color: var(--muted); font-weight: 500; }
+.feed { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.feed li { display: grid; grid-template-columns: 120px 1fr auto; gap: 12px; padding: 8px 12px; background: var(--panel); border-radius: 10px; }
+.feed time { color: var(--muted); white-space: nowrap; }
+.feed code { color: var(--muted); font-size: 14px; }
+@media (max-width: 640px) { .stage { grid-template-columns: 1fr 90px; } .stage .bar { grid-column: 1 / -1; grid-row: 2; } .feed li { grid-template-columns: 1fr; } }
+.branches { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 8px 24px; }
+.branches h3 { flex-basis: 100%; margin: 0; font-size: 16px; color: var(--muted); font-weight: 600; }
+.branch { display: flex; gap: 8px; align-items: baseline; }
+.branches.sim .branch { border-bottom: 2px dashed var(--similar); }
