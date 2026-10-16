@@ -129,7 +129,7 @@ func TestRuleAgent(t *testing.T) {
 		t.Fatalf("cheaper: %+v", r)
 	}
 	for _, card := range r.Cards {
-		if card.Product.Price >= 120 || card.Product.Category != "sneakers" {
+		if card.Product.Price >= 9999 || card.Product.Category != "sneakers" {
 			t.Errorf("not cheaper/in-category: %s %.0f", card.Product.ID, card.Product.Price)
 		}
 	}
@@ -143,12 +143,12 @@ func TestRuleAgent(t *testing.T) {
 			t.Errorf("unexpected red result %s", card.Product.ID)
 		}
 	}
-	r = ruleAgent(c, st, cc, "anything under $70?")
+	r = ruleAgent(c, st, cc, "anything under ₹5,000?")
 	if len(r.Cards) == 0 {
-		t.Fatal("want results under $70")
+		t.Fatal("want results under ₹5,000")
 	}
 	for _, card := range r.Cards {
-		if card.Product.Price > 70 {
+		if card.Product.Price > 5000 {
 			t.Errorf("over budget: %s", card.Product.ID)
 		}
 	}
@@ -192,11 +192,11 @@ func fakeVertex(t *testing.T) *httptest.Server {
 			if prev["thoughtSignature"] != "sig-123" {
 				t.Errorf("thought signature was not echoed back")
 			}
-			json.NewEncoder(w).Encode(map[string]any{"candidates": []any{map[string]any{"content": map[string]any{"role": "model", "parts": []any{map[string]any{"text": "Here are two options under $100."}}}}}})
+			json.NewEncoder(w).Encode(map[string]any{"candidates": []any{map[string]any{"content": map[string]any{"role": "model", "parts": []any{map[string]any{"text": "Here are two options under ₹8,000."}}}}}})
 			return
 		}
 		json.NewEncoder(w).Encode(map[string]any{"candidates": []any{map[string]any{"content": map[string]any{"role": "model", "parts": []any{
-			map[string]any{"functionCall": map[string]any{"name": "search_catalog", "args": map[string]any{"category": "sneakers", "max_price": 100}}, "thoughtSignature": "sig-123"},
+			map[string]any{"functionCall": map[string]any{"name": "search_catalog", "args": map[string]any{"category": "sneakers", "max_price": 8000}}, "thoughtSignature": "sig-123"},
 		}}}}})
 	}))
 }
@@ -228,12 +228,12 @@ func TestGeminiClientAgainstFakeVertex(t *testing.T) {
 
 	st := NewStore()
 	ss := st.NewSession("")
-	res := RunAgent(context.Background(), g, c, st, ChatContext{SessionID: ss.ID}, nil, "show me sneakers under $100")
+	res := RunAgent(context.Background(), g, c, st, ChatContext{SessionID: ss.ID}, nil, "show me sneakers under ₹8000")
 	if res.Source != "gemini" || res.Reply == "" || len(res.Trace) != 1 || res.Trace[0].Name != "search_catalog" {
 		t.Fatalf("agent result: %+v", res)
 	}
 	for _, card := range res.Cards {
-		if card.Product.Price > 100 || card.Product.Category != "sneakers" {
+		if card.Product.Price > 8000 || card.Product.Category != "sneakers" {
 			t.Errorf("tool results must be catalog-grounded: %s", card.Product.ID)
 		}
 	}
@@ -259,7 +259,7 @@ func testServer(t *testing.T, g *Gemini) (*httptest.Server, *Server) {
 	t.Helper()
 	web := fstest.MapFS{
 		"tv.html": {Data: []byte("tv")}, "mobile.html": {Data: []byte("mobile")},
-		"dashboard.html": {Data: []byte("dash")}, "eval.html": {Data: []byte("eval")},
+		"dashboard.html": {Data: []byte("dash")}, "eval.html": {Data: []byte("eval")}, "pay.html": {Data: []byte("pay")},
 		"static/app.css": {Data: []byte("x")},
 	}
 	s := NewServer(mustCatalog(t), NewStore(), g, web)
@@ -337,7 +337,7 @@ func TestEndToEndFlow(t *testing.T) {
 	}
 	call(t, "POST", ts.URL+"/api/sessions/"+sid+"/phone-opened", nil) // idempotent for funnel
 	code, out = call(t, "POST", ts.URL+"/api/sessions/"+sid+"/cart", map[string]any{"product_id": "stride-pulse", "color": "white", "delta": 1})
-	if code != 200 || out["cart_total"].(float64) != 120 {
+	if code != 200 || out["cart_total"].(float64) != 9999 {
 		t.Fatalf("cart: %d %v", code, out)
 	}
 	if code, _ = call(t, "POST", ts.URL+"/api/sessions/"+sid+"/cart", map[string]any{"product_id": "nope", "delta": 1}); code != 400 {

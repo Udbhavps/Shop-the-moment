@@ -29,13 +29,14 @@ type Server struct {
 	ucp        *UCP
 	ucpLimiter *rateLimiter
 	cartMu     sync.Mutex // serialises cart read-modify-write per process
+	pay        *payments
 }
 
 func NewServer(cat *Catalog, store *Store, gem *Gemini, web fs.FS) *Server {
 	return &Server{cat: cat, store: store, gem: gem, ads: buildAds(cat), web: web,
 		baseURL: strings.TrimRight(os.Getenv("PUBLIC_BASE_URL"), "/"),
 		limiter: newRateLimiter(40, time.Minute),
-		ucp:     NewUCP(cat), ucpLimiter: newRateLimiter(600, time.Minute)}
+		ucp:     NewUCP(cat), ucpLimiter: newRateLimiter(600, time.Minute), pay: newPayments()}
 }
 
 func (s *Server) Routes() http.Handler {
@@ -45,6 +46,7 @@ func (s *Server) Routes() http.Handler {
 	})
 
 	s.registerUCP(mux)
+	s.registerPay(mux)
 
 	mux.HandleFunc("GET /api/config", s.handleConfig)
 	mux.HandleFunc("GET /api/ads", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, 200, map[string]any{"ads": s.ads}) })
@@ -95,6 +97,7 @@ func (s *Server) Routes() http.Handler {
 	}
 	mux.HandleFunc("GET /{$}", page("tv.html"))
 	mux.HandleFunc("GET /m/{id}", page("mobile.html"))
+	mux.HandleFunc("GET /pay/{id}", page("pay.html"))
 	mux.HandleFunc("GET /dashboard", page("dashboard.html"))
 	mux.HandleFunc("GET /eval", page("eval.html"))
 
@@ -493,7 +496,7 @@ func firstMessage(m []ucpMessage) string {
 	return m[0].Content
 }
 
-// handleCheckout runs a UCP checkout for the session's cart with the simulated demo_pay handler.
+// handleCheckout runs a UCP checkout for the session's cart with the simulated demo card handler.
 func (s *Server) handleCheckout(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Channel string `json:"channel"`
@@ -504,32 +507,41 @@ func (s *Server) handleCheckout(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	s.cartMu.Lock()
 	defer s.cartMu.Unlock()
+	ss, code, err := s.placeOrderLocked(id, ucpDemoHandler, ucpDemoTokenHead+id, s.origin(r), channelOf(req.Channel))
+	if err != nil {
+		writeErr(w, code, err.Error())
+		return
+	}
+	writeJSON(w, 200, s.view(ss))
+}
+
+// placeOrderLocked creates and completes a UCP checkout for the session's cart.
+// The caller holds s.cartMu. It returns an HTTP status code alongside any error.
+func (s *Server) placeOrderLocked(id, handler, token, base, channel string) (Session, int, error) {
 	ss, err := s.store.Get(id)
 	if err != nil {
-		writeErr(w, 404, err.Error())
-		return
+		return ss, 404, err
 	}
 	if ss.Order != nil {
-		writeErr(w, 400, errOrdered.Error())
-		return
+		return ss, 400, errOrdered
 	}
 	if len(ss.Cart) == 0 || ss.CartID == "" {
-		writeErr(w, 400, "cart is empty")
-		return
+		return ss, 400, errors.New("cart is empty")
 	}
-	base := s.origin(r)
 	co := s.ucp.CreateCheckout(ucpCheckoutReq{CartID: ss.CartID}, base)
 	if co.ID == "" {
-		writeErr(w, 400, firstMessage(co.Messages))
-		return
+		return ss, 400, errors.New(firstMessage(co.Messages))
+	}
+	typ := "demo_token"
+	if handler == ucpUPIHandler {
+		typ = "demo_upi"
 	}
 	done := s.ucp.CompleteCheckout(co.ID, ucpCheckoutReq{Payment: &ucpPayment{Instruments: []ucpInstrument{{
-		ID: "demo_card_4242", HandlerID: ucpDemoHandler, Type: "demo_token",
-		Credential: &ucpCredential{Type: "demo_token", Token: ucpDemoTokenHead + id},
+		ID: "inst_" + handler, HandlerID: handler, Type: typ,
+		Credential: &ucpCredential{Type: typ, Token: token},
 	}}}}, base)
 	if done.Status != "completed" || done.Order == nil {
-		writeErr(w, 400, firstMessage(done.Messages))
-		return
+		return ss, 400, errors.New(firstMessage(done.Messages))
 	}
 	count := 0
 	for _, l := range done.LineItems {
@@ -538,11 +550,10 @@ func (s *Server) handleCheckout(w http.ResponseWriter, r *http.Request) {
 	total := done.Totals[len(done.Totals)-1].Amount
 	ss, err = s.store.SetOrder(id, co.ID, Order{ID: done.Order.ID, Total: float64(total) / 100, Currency: s.cat.Currency, ItemCount: count, Simulated: true})
 	if err != nil {
-		writeErr(w, 400, err.Error())
-		return
+		return ss, 400, err
 	}
-	s.store.AddEvent(id, "demo_purchase_completed", map[string]string{"channel": channelOf(req.Channel)})
-	writeJSON(w, 200, s.view(ss))
+	s.store.AddEvent(id, "demo_purchase_completed", map[string]string{"channel": channel, "method": handler})
+	return ss, 200, nil
 }
 
 // ----------------------------------------------------------------- events ---

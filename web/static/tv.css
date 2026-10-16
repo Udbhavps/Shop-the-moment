@@ -215,3 +215,15 @@ body.tv { overflow: hidden; display: grid; place-items: center; background: #050
 .pay-error { margin: 0 0 16px; font-size: 26px; color: var(--danger); }
 .pay-done { font-size: 30px; line-height: 1.4; color: var(--muted); }
 .pay-done strong { color: var(--exact); font-size: 40px; display: block; margin: 8px 0; }
+
+.pay-grid { display: grid; grid-template-columns: 380px 1fr; gap: 44px; align-items: start; margin-bottom: 8px; }
+.pay-qrbox { display: flex; flex-direction: column; gap: 14px; align-items: center; }
+.pay-qr { width: 380px; height: 380px; padding: 20px; border-radius: 24px; background: #fff; }
+.pay-qr img { width: 100%; height: 100%; }
+.pay-qr.off { display: grid; place-items: center; text-align: center; background: var(--panel-2); color: var(--muted); font-size: 28px; border: 3px dashed var(--line); }
+.pay-qrnote { margin: 0; font-size: 26px; font-weight: 700; }
+.pay-state { margin: 0; display: flex; gap: 12px; align-items: center; font-size: 22px; color: var(--muted); }
+.pay-right .pay-line { grid-template-columns: 80px 1fr auto auto; gap: 18px; }
+.pay-right .pay-line img { width: 80px; height: 80px; }
+.pay-right .pay-line .n { font-size: 28px; }
+.pay-right .pay-line .amt { font-size: 28px; min-width: 130px; }

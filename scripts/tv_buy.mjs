@@ -1,4 +1,4 @@
-// Buy entirely on the TV: ad -> identify -> product -> Buy now -> change quantity -> pay (demo) -> receipt.
+// Buy entirely on the TV with the demo card fallback: Buy now -> change quantity -> new QR -> pay with card -> receipt.
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
 const require = createRequire(import.meta.url);
@@ -17,12 +17,13 @@ await page.waitForSelector('.card.hero'); await page.click('.card.hero');
 await page.waitForSelector('.detail');
 await page.click('.detail .btn:has-text("Buy now")');
 await page.waitForSelector('#pay.open .pay-line');
+await page.waitForSelector('#pay .pay-qr img');
 await page.click('#pay .plus');                       // quantity 2
 await page.waitForFunction(() => document.querySelector('#pay .pay-qty output')?.textContent === '2');
 await page.screenshot({ path: `${OUT}/12-tv-pay.png` });
 // keyboard only: focus must be on a control and Enter must work
 const focusedOK = await page.evaluate(() => !!document.activeElement && document.activeElement.closest('#pay') !== null);
-await page.click('#pay .btn.primary');
+await page.click('#pay .btn:has-text("Pay with demo card")');
 await page.waitForSelector('#pay .pay-done');
 await page.screenshot({ path: `${OUT}/13-tv-done.png` });
 const text = await page.evaluate(() => document.querySelector('#pay').innerText.replace(/\n/g, ' | '));

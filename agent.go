@@ -192,8 +192,8 @@ func RunAgent(ctx context.Context, g *Gemini, cat *Catalog, store *Store, cc Cha
 }
 
 var (
-	rePriceMax  = regexp.MustCompile(`(?:under|below|less than|max(?:imum)?|within|up to|cheaper than|budget of)\s*(?:\$|rs\.?|₹|usd)?\s*(\d+)`)
-	rePriceBare = regexp.MustCompile(`(?:\$|₹)\s*(\d+)`)
+	rePriceMax  = regexp.MustCompile(`(?:under|below|less than|max(?:imum)?|within|up to|cheaper than|budget of)\s*(?:\$|rs\.?|₹|usd|inr)?\s*(\d[\d,]*)`)
+	rePriceBare = regexp.MustCompile(`(?:\$|₹)\s*(\d[\d,]*)`)
 )
 
 func ruleAgent(cat *Catalog, store *Store, cc ChatContext, msg string) AgentResult {
@@ -220,9 +220,9 @@ func ruleAgent(cat *Catalog, store *Store, cc ChatContext, msg string) AgentResu
 	}
 	maxPrice := 0.0
 	if m := rePriceMax.FindStringSubmatch(low); m != nil {
-		fmt.Sscanf(m[1], "%f", &maxPrice)
+		fmt.Sscanf(strings.ReplaceAll(m[1], ",", ""), "%f", &maxPrice)
 	} else if m := rePriceBare.FindStringSubmatch(low); m != nil {
-		fmt.Sscanf(m[1], "%f", &maxPrice)
+		fmt.Sscanf(strings.ReplaceAll(m[1], ",", ""), "%f", &maxPrice)
 	}
 
 	call := func(name string, args map[string]any) (any, bool) {
@@ -307,12 +307,33 @@ func ruleAgent(cat *Catalog, store *Store, cc ChatContext, msg string) AgentResu
 	return finish(strings.Join(parts, " ") + ".")
 }
 
+// groupIndian formats 1234567 as 12,34,567.
+func groupIndian(n int64) string {
+	s := fmt.Sprintf("%d", n)
+	if len(s) <= 3 {
+		return s
+	}
+	head, tail := s[:len(s)-3], s[len(s)-3:]
+	var parts []string
+	for len(head) > 2 {
+		parts = append([]string{head[len(head)-2:]}, parts...)
+		head = head[:len(head)-2]
+	}
+	if head != "" {
+		parts = append([]string{head}, parts...)
+	}
+	return strings.Join(parts, ",") + "," + tail
+}
+
 func tokensKeepShort(s string) []string {
 	return strings.FieldsFunc(s, func(r rune) bool { return !(r >= 'a' && r <= 'z') })
 }
 
 func money(v float64, cur string) string {
-	if cur == "USD" || cur == "" {
+	switch cur {
+	case "INR":
+		return "₹" + groupIndian(int64(v+0.5))
+	case "USD", "":
 		return fmt.Sprintf("$%.0f", v)
 	}
 	return fmt.Sprintf("%.0f %s", v, cur)

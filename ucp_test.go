@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 )
 
 const testAgent = `profile="https://platform.example/.well-known/ucp"`
@@ -81,7 +82,7 @@ func TestUCPCartLifecycle(t *testing.T) {
 	if code != 201 || c["id"] == nil || h.Get("Request-Id") != "test-req-1" {
 		t.Fatalf("create: %d %v", code, c)
 	}
-	if totalOf(c) != 2*12000+3200 || c["currency"] != "USD" {
+	if totalOf(c) != 2*999900+249900 || c["currency"] != "INR" {
 		t.Fatalf("totals in minor units: %v", c["totals"])
 	}
 	id := c["id"].(string)
@@ -97,7 +98,7 @@ func TestUCPCartLifecycle(t *testing.T) {
 
 	// Update replaces the whole cart.
 	code, c, _ = ucpCall(t, "PUT", ts.URL+"/ucp/v1/carts/"+id, "", ucpCartReq{LineItems: []ucpReqLine{line("HYDRA-STEEL-ORANGE", 1)}})
-	if code != 200 || totalOf(c) != 3200 || len(c["line_items"].([]any)) != 1 {
+	if code != 200 || totalOf(c) != 249900 || len(c["line_items"].([]any)) != 1 {
 		t.Fatalf("update: %d %v", code, c)
 	}
 	// Business errors are HTTP 200 with ucp.status=error and no id.
@@ -128,7 +129,7 @@ func TestUCPCheckoutLifecycle(t *testing.T) {
 	cartID := cart["id"].(string)
 
 	code, co, _ := ucpCall(t, "POST", ts.URL+"/ucp/v1/checkout-sessions", "k-co", ucpCheckoutReq{CartID: cartID})
-	if code != 201 || co["status"] != "ready_for_complete" || totalOf(co) != 19900 {
+	if code != 201 || co["status"] != "ready_for_complete" || totalOf(co) != 1599900 {
 		t.Fatalf("create checkout: %d %v", code, co)
 	}
 	if handlers := co["ucp"].(map[string]any)["payment_handlers"].(map[string]any); handlers[ucpHandlerName] == nil {
@@ -206,13 +207,13 @@ func TestSessionCartRunsOnUCP(t *testing.T) {
 	cartURL := ts.URL + "/api/sessions/" + sid + "/cart"
 
 	code, v := call(t, "POST", cartURL, map[string]any{"product_id": "stride-pulse", "color": "white", "delta": 1, "channel": "tv"})
-	if code != 200 || v["cart_total"].(float64) != 120 {
+	if code != 200 || v["cart_total"].(float64) != 9999 {
 		t.Fatalf("add: %d %v", code, v)
 	}
 	cartID := v["session"].(map[string]any)["ucp_cart_id"].(string)
 	// The same cart is visible through the UCP API.
 	_, g, _ := ucpCall(t, "GET", ts.URL+"/ucp/v1/carts/"+cartID, "", nil)
-	if totalOf(g) != 12000 {
+	if totalOf(g) != 999900 {
 		t.Fatalf("UCP cart should match: %v", g)
 	}
 	call(t, "POST", cartURL, map[string]any{"product_id": "stride-pulse", "color": "white", "delta": 2})
@@ -226,7 +227,7 @@ func TestSessionCartRunsOnUCP(t *testing.T) {
 	call(t, "POST", cartURL, map[string]any{"product_id": "hydra-steel", "color": "orange", "delta": 2})
 	code, v = call(t, "POST", ts.URL+"/api/sessions/"+sid+"/checkout", map[string]any{"channel": "tv"})
 	ord := v["session"].(map[string]any)["order"].(map[string]any)
-	if code != 200 || ord["total"].(float64) != 64 || ord["item_count"].(float64) != 2 {
+	if code != 200 || ord["total"].(float64) != 4998 || ord["item_count"].(float64) != 2 {
 		t.Fatalf("checkout: %d %v", code, v)
 	}
 	if _, rec := s.ucp.Order(ord["id"].(string)); !rec {
@@ -243,5 +244,111 @@ func TestSessionCartRunsOnUCP(t *testing.T) {
 	}
 	if code, _ = call(t, "POST", cartURL, map[string]any{"product_id": "dash-lite", "delta": 1}); code != 400 {
 		t.Fatalf("cart must be locked after the order, got %d", code)
+	}
+}
+
+func TestUPIPaymentIntentFlow(t *testing.T) {
+	ts, s := testServer(t, nil)
+	_, out := call(t, "POST", ts.URL+"/api/sessions", map[string]any{"ad_id": "morning-run"})
+	sid := out["session"].(map[string]any)["id"].(string)
+	cartURL := ts.URL + "/api/sessions/" + sid + "/cart"
+	intentURL := ts.URL + "/api/sessions/" + sid + "/pay-intent"
+
+	if code, _ := call(t, "POST", intentURL, map[string]any{}); code != 400 {
+		t.Fatalf("empty cart must not get a payment intent, got %d", code)
+	}
+	call(t, "POST", cartURL, map[string]any{"product_id": "korvo-halo", "color": "black", "delta": 1, "channel": "tv"})
+	code, in := call(t, "POST", intentURL, map[string]any{})
+	if code != 200 || in["amount"].(float64) != 15999 || in["currency"] != "INR" || in["demo"] != true {
+		t.Fatalf("intent: %d %v", code, in)
+	}
+	pid := in["intent_id"].(string)
+	if !strings.Contains(in["pay_url"].(string), "/pay/"+pid) || !strings.HasPrefix(in["qr_url"].(string), "/api/qr?text=") {
+		t.Fatalf("bad urls: %v", in)
+	}
+	// The QR holds an https/http link to this app, never a upi:// string.
+	if strings.Contains(in["pay_url"].(string), "upi://") {
+		t.Fatal("QR must not carry a real UPI payment string")
+	}
+	// The phone page data.
+	code, g := call(t, "GET", ts.URL+"/api/pay/"+pid, nil)
+	lines := g["lines"].([]any)
+	if code != 200 || g["status"] != "pending" || len(lines) != 1 || lines[0].(map[string]any)["name"] != "Korvo Halo ANC" {
+		t.Fatalf("get intent: %d %v", code, g)
+	}
+	if code, _ := call(t, "GET", ts.URL+"/pay/"+pid, nil); code != 200 {
+		t.Fatalf("pay page: %d", code)
+	}
+
+	// Cart changes after the QR was shown make the old QR unusable.
+	call(t, "POST", cartURL, map[string]any{"product_id": "sonic-buds", "color": "black", "delta": 1, "channel": "tv"})
+	if code, r := call(t, "POST", ts.URL+"/api/pay/"+pid+"/approve", map[string]any{}); code != 409 || r["status"] != "superseded" {
+		t.Fatalf("stale QR must be refused: %d %v", code, r)
+	}
+	// A new intent for the new cart can be approved once.
+	_, in = call(t, "POST", intentURL, map[string]any{})
+	pid = in["intent_id"].(string)
+	if in["amount"].(float64) != 18998 {
+		t.Fatalf("amount should include both items: %v", in["amount"])
+	}
+	code, r := call(t, "POST", ts.URL+"/api/pay/"+pid+"/approve", map[string]any{})
+	if code != 200 || r["status"] != "paid" || !strings.HasPrefix(r["order_id"].(string), "DEMO-") {
+		t.Fatalf("approve: %d %v", code, r)
+	}
+	orderID := r["order_id"].(string)
+	if code, r = call(t, "POST", ts.URL+"/api/pay/"+pid+"/approve", map[string]any{}); code != 409 {
+		t.Fatalf("second approve must be refused: %d %v", code, r)
+	}
+	_, sv := call(t, "GET", ts.URL+"/api/sessions/"+sid, nil)
+	ord := sv["session"].(map[string]any)["order"].(map[string]any)
+	if ord["total"].(float64) != 18998 || ord["id"] != orderID {
+		t.Fatalf("order: %v", ord)
+	}
+	var upi bool
+	for _, e := range s.store.Events(0, 100) {
+		if e.Name == "demo_purchase_completed" && e.Props["method"] == ucpUPIHandler && e.Props["channel"] == "upi" {
+			upi = true
+		}
+	}
+	if !upi {
+		t.Fatal("purchase event should record the UPI method")
+	}
+
+	// Decline and expiry.
+	_, in2 := call(t, "POST", ts.URL+"/api/sessions", map[string]any{"ad_id": "morning-run"})
+	sid2 := in2["session"].(map[string]any)["id"].(string)
+	call(t, "POST", ts.URL+"/api/sessions/"+sid2+"/cart", map[string]any{"product_id": "hydra-lite", "color": "green", "delta": 1})
+	_, i2 := call(t, "POST", ts.URL+"/api/sessions/"+sid2+"/pay-intent", map[string]any{})
+	if _, r := call(t, "POST", ts.URL+"/api/pay/"+i2["intent_id"].(string)+"/decline", map[string]any{}); r["status"] != "declined" {
+		t.Fatalf("decline: %v", r)
+	}
+	_, i3 := call(t, "POST", ts.URL+"/api/sessions/"+sid2+"/pay-intent", map[string]any{})
+	s.ucp.now = func() time.Time { return time.Now().Add(10 * time.Minute) }
+	if code, r := call(t, "POST", ts.URL+"/api/pay/"+i3["intent_id"].(string)+"/approve", map[string]any{}); code != 409 || r["status"] != "expired" {
+		t.Fatalf("expired intent must be refused: %d %v", code, r)
+	}
+	if code, _ := call(t, "GET", ts.URL+"/api/pay/pay_nope", nil); code != 404 {
+		t.Fatalf("unknown intent: %d", code)
+	}
+}
+
+func TestUCPUPIHandler(t *testing.T) {
+	ts, _ := testServer(t, nil)
+	_, cart, _ := ucpCall(t, "POST", ts.URL+"/ucp/v1/carts", "u-cart", ucpCartReq{LineItems: []ucpReqLine{{Item: ucpReqItem{ID: "SONIC-BUDS-BLACK"}, Quantity: 1}}})
+	_, co, _ := ucpCall(t, "POST", ts.URL+"/ucp/v1/checkout-sessions", "u-co", ucpCheckoutReq{CartID: cart["id"].(string)})
+	id := co["id"].(string)
+	// A card token does not work on the UPI handler, and the reverse.
+	bad := ucpInstrument{ID: "x", HandlerID: ucpUPIHandler, Type: "demo_upi", Credential: &ucpCredential{Type: "demo_upi", Token: "demo_tok_x"}}
+	_, out, _ := ucpCall(t, "POST", ts.URL+"/ucp/v1/checkout-sessions/"+id+"/complete", "u-c1", ucpCheckoutReq{Payment: &ucpPayment{Instruments: []ucpInstrument{bad}}})
+	if out["messages"].([]any)[0].(map[string]any)["code"] != "payment_credential_invalid" {
+		t.Fatalf("card token on the UPI handler must fail: %v", out)
+	}
+	good := ucpInstrument{ID: "x", HandlerID: ucpUPIHandler, Type: "demo_upi", Credential: &ucpCredential{Type: "demo_upi", Token: ucpUPITokenHead + "abc"}}
+	_, out, _ = ucpCall(t, "POST", ts.URL+"/ucp/v1/checkout-sessions/"+id+"/complete", "u-c2", ucpCheckoutReq{Payment: &ucpPayment{Instruments: []ucpInstrument{good}}})
+	if out["status"] != "completed" {
+		t.Fatalf("UPI complete: %v", out)
+	}
+	if code, doc, _ := ucpCall(t, "GET", ts.URL+"/ucp/handlers/"+ucpUPIHandler, "", nil); code != 200 || !strings.Contains(doc["description"].(string), "not connected") {
+		t.Fatalf("handler doc: %d %v", code, doc)
 	}
 }

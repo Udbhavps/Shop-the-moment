@@ -5,7 +5,7 @@
   const $ = (id) => document.getElementById(id);
   const stage = $('stage');
   const S = {
-    cfg: { live_ai: false, currency: 'USD' },
+    cfg: { live_ai: false, currency: 'INR' },
     ads: [], adIdx: 0, sceneIdx: 0, sceneStart: 0, paused: false,
     session: null, mobileUrl: '',
     panelOpen: false, handoffOpen: false, payOpen: false, payBusy: false,
@@ -34,7 +34,7 @@
     }
     return el;
   }
-  const money = (v) => new Intl.NumberFormat('en-US', { style: 'currency', currency: S.cfg.currency || 'USD', maximumFractionDigits: 0 }).format(v);
+  const money = (v) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: S.cfg.currency || 'INR', maximumFractionDigits: 0 }).format(v);
   const pretty = (s) => String(s || '').replace(/_/g, ' ');
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   const img = (id, color) => `/img/${encodeURIComponent(id)}.svg?color=${encodeURIComponent(color || '')}`;
@@ -329,7 +329,9 @@
   }
 
   // ------------------------------------------------- buy on the TV (demo) ---
-  // Cart and checkout run on the UCP merchant API through the session endpoints.
+  // Buy now adds the item to the UCP cart, then shows a QR for a demo UPI payment.
+  // The QR opens an approval page on the phone; approving completes the UCP checkout.
+  // The TV also offers a simulated card so the flow works with no phone at all.
   async function buyNow() {
     const { product, color } = S.detail;
     if (S.session.order) { openPay(); return; }
@@ -342,32 +344,63 @@
     }
   }
 
-  function openPay(msg) {
+  function stopPayPoll() { clearInterval(S.payTimer); S.payTimer = null; }
+
+  async function openPay() {
     S.payOpen = true;
+    S.upi = null;
     $('pay').classList.add('open');
-    drawPay(msg);
+    drawPay();
+    if (!S.session.order && (S.cart || []).length) await startIntent();
   }
 
   function closePay() {
+    stopPayPoll();
     S.payOpen = false;
+    S.upi = null;
     $('pay').classList.remove('open');
     if (S.panelOpen) { render(); focusFirst(); }
+  }
+
+  async function startIntent(focusAfter) {
+    stopPayPoll();
+    try {
+      S.upi = await api(`/api/sessions/${S.session.id}/pay-intent`, {});
+    } catch (e) {
+      S.upi = { status: 'error', error: e.message };
+    }
+    drawPay(null, focusAfter);
+    if (S.upi.intent_id) S.payTimer = setInterval(pollIntent, 1500);
+  }
+
+  async function pollIntent() {
+    if (!S.payOpen || !S.upi || !S.upi.intent_id || S.payBusy) return;
+    try {
+      const r = await api(`/api/pay/${S.upi.intent_id}`);
+      if (r.status === S.upi.status) return;
+      S.upi.status = r.status;
+      if (r.status === 'paid') { stopPayPoll(); await refreshSession(); }
+      drawPay();
+    } catch (e) { /* intent gone: the next draw offers a new QR */ }
   }
 
   async function changeQty(line, delta) {
     if (S.payBusy) return;
     S.payBusy = true;
+    stopPayPoll();
     try {
       await api(`/api/sessions/${S.session.id}/cart`, { product_id: line.product.id, color: line.color, delta, channel: 'tv' });
       await refreshSession();
-      drawPay(null, `.pay-line[data-k="${line.product.id}-${line.color}"] .${delta > 0 ? 'plus' : 'minus'}`);
-    } catch (e) { drawPay(e.message); }
-    S.payBusy = false;
+      S.payBusy = false;
+      if ((S.cart || []).length) await startIntent(`.pay-line[data-k="${line.product.id}-${line.color}"] .${delta > 0 ? 'plus' : 'minus'}`);
+      else { S.upi = null; drawPay(); }
+    } catch (e) { S.payBusy = false; drawPay(e.message); }
   }
 
-  async function payNow() {
+  async function payWithCard() {
     if (S.payBusy) return;
     S.payBusy = true;
+    stopPayPoll();
     try {
       await api(`/api/sessions/${S.session.id}/checkout`, { channel: 'tv' });
       await refreshSession();
@@ -387,12 +420,24 @@
           `${order.item_count} item${order.item_count === 1 ? '' : 's'}, ${money(order.total)}. This was a simulation: no payment was taken and nothing will ship.`),
         h('div', { class: 'actions', style: 'margin-top:28px' }, h('button', { class: 'btn primary focusable', type: 'button', onclick: closePay }, 'Back to the ad')));
     } else {
-      card.append(h('h2', { id: 'pay-title' }, 'Buy on your TV'), h('p', { class: 'demo' }, 'Demo checkout. Nothing is charged.'));
+      const u = S.upi;
+      card.append(h('h2', { id: 'pay-title' }, 'Pay with UPI'), h('p', { class: 'demo' }, 'Demo checkout. Nothing is charged.'));
       if (error) card.append(h('p', { class: 'pay-error', role: 'alert' }, error));
-      if (!lines.length) card.append(h('p', { class: 'demo' }, 'Your cart is empty.'));
+      const qrBox = h('div', { class: 'pay-qrbox' });
+      const live = u && u.qr_url && u.status === 'pending';
+      if (live) {
+        qrBox.append(h('div', { class: 'pay-qr' }, h('img', { src: u.qr_url, alt: 'QR code to approve the demo payment on your phone', width: 340, height: 340 })),
+          h('p', { class: 'pay-qrnote' }, 'Scan with your phone camera'),
+          h('p', { class: 'pay-state' }, h('span', { class: 'dot' }), 'Waiting for your phone'));
+      } else {
+        const msg = !u ? 'Getting your QR code' : u.status === 'declined' ? 'Declined on the phone' : u.status === 'expired' ? 'This QR code expired' : u.status === 'error' ? (u.error || 'Could not create a QR code') : 'This QR code is out of date';
+        qrBox.append(h('div', { class: 'pay-qr off' }, msg), u ? h('button', { class: 'btn primary focusable', type: 'button', onclick: () => startIntent() }, 'New QR code') : null);
+      }
+      const right = h('div', { class: 'pay-right' });
+      if (!lines.length) right.append(h('p', { class: 'demo' }, 'Your cart is empty.'));
       for (const l of lines) {
-        card.append(h('div', { class: 'pay-line', 'data-k': `${l.product.id}-${l.color}` },
-          h('img', { src: img(l.product.id, l.color), alt: '', width: 96, height: 96 }),
+        right.append(h('div', { class: 'pay-line', 'data-k': `${l.product.id}-${l.color}` },
+          h('img', { src: img(l.product.id, l.color), alt: '', width: 80, height: 80 }),
           h('div', {}, h('div', { class: 'n' }, l.product.name), h('div', { class: 'c' }, h('span', { style: 'text-transform:capitalize' }, l.color), `, ${money(l.product.price)} each`)),
           h('div', { class: 'pay-qty' },
             h('button', { type: 'button', class: 'minus focusable', 'aria-label': `Remove one ${l.product.name}`, onclick: () => changeQty(l, -1) }, '-'),
@@ -400,16 +445,16 @@
             h('button', { type: 'button', class: 'plus focusable', 'aria-label': `Add one ${l.product.name}`, onclick: () => changeQty(l, 1) }, '+')),
           h('div', { class: 'amt' }, money(l.product.price * l.qty))));
       }
-      card.append(h('div', { class: 'pay-total' }, h('span', {}, 'Total'), h('span', {}, money(total))),
-        h('div', { class: 'pay-method' }, h('i', {}, 'Simulated'), 'Demo card ending 4242. No money moves.'),
+      right.append(h('div', { class: 'pay-total' }, h('span', {}, 'Total'), h('span', {}, money(total))));
+      card.append(h('div', { class: 'pay-grid' }, qrBox, right),
         h('div', { class: 'actions' },
-          h('button', { class: 'btn primary focusable', type: 'button', disabled: !lines.length, onclick: payNow }, `Pay ${money(total)} (demo)`),
+          h('button', { class: 'btn focusable', type: 'button', disabled: !lines.length, onclick: payWithCard }, 'Pay with demo card instead'),
           h('button', { class: 'btn focusable', type: 'button', onclick: closePay }, 'Keep browsing')),
-        h('p', { class: 'pay-foot' }, 'Cart and checkout use the Universal Commerce Protocol (UCP) against a demo merchant. Not a real store.'));
+        h('p', { class: 'pay-foot' }, 'Demo only: the QR opens an approval page in this app, not a UPI app, and no bank is involved. Cart and checkout use the Universal Commerce Protocol (UCP) against a demo merchant.'));
     }
     $('pay').replaceChildren(card);
     requestAnimationFrame(() => {
-      const el = (focusSel2 && $('pay').querySelector(focusSel2)) || $('pay').querySelector('.btn.primary:not([disabled])') || $('pay').querySelector('button');
+      const el = (focusSel2 && $('pay').querySelector(focusSel2)) || $('pay').querySelector('.btn.primary:not([disabled])') || $('pay').querySelector('.plus') || $('pay').querySelector('button');
       if (el) el.focus({ preventScroll: true });
     });
   }

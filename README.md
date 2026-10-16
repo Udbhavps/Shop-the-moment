@@ -55,8 +55,20 @@ curl -s -X POST $URL/ucp/v1/carts -H 'UCP-Agent: profile="https://me.example/.we
 What is and is not covered:
 - Covered: profile discovery, cart and checkout operations, status lifecycle (`ready_for_complete` to `completed` or `canceled`), totals, idempotency, error messages.
 - Not covered: request signing (RFC 9421), fulfillment and discount extensions, identity linking, fetching or verifying the caller's profile, tax and shipping. Checkout skips `incomplete` because the demo needs no buyer details.
-- Payment is a made-up handler, `demo_pay`. Any token starting `demo_tok_` is accepted and refused otherwise. No card data is ever collected, and no money moves.
+- Payment uses made-up handlers: `demo_pay` (token starts `demo_tok_`) and `demo_upi` (token starts `demo_upi_tok_`, issued only after the phone approves). Anything else is refused. No card data is ever collected, and no money moves.
 - Written from the published spec pages and tested only against this project's own tests, not an official conformance suite. Check field names against the current spec before claiming compatibility. This is not an official or Google-run UCP deployment.
+
+## Paying with UPI (demo)
+
+Buy now shows a QR on the TV. It opens `/pay/{id}` on the shopper's phone, where they approve or decline. Approving completes the UCP checkout using the `demo_upi` handler, and the TV, which polls the payment, shows the order. The catalog is in INR because UPI is rupee-only.
+
+This is a simulation of the flow, not UPI. The QR holds a link to this app, not a `upi://` payment string, so Google Pay, PhonePe and the rest will not pay it, and no bank is involved. To take real UPI payments you would create the payment at a gateway (for example Razorpay or Cashfree), show their dynamic QR, and confirm from their webhook instead of the approve button. That needs a merchant account and is not built.
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /api/sessions/{id}/pay-intent` | TV: price the cart and get a QR (replaces any older open intent) |
+| `GET /api/pay/{id}` | phone and TV: status (`pending`, `paid`, `declined`, `expired`, `superseded`) |
+| `POST /api/pay/{id}/approve`, `/decline` | phone: decide; approve runs the UCP checkout |
 
 ## Configuration
 
@@ -94,7 +106,7 @@ Sessions are in memory, so the service must run with `--max-instances=1` (the sc
 2. Press OK. Show the green exact match for the sneakers and the dashed similar items.
 3. Open the hidden-brand backpack scene: only "similar", and say why it is not claimed as exact.
 4. Ask "Show me a cheaper one" and "this in blue"; show tool-call trace and catalog prices.
-5. Press Buy now, change the quantity, pay with the demo card on the TV. Then show Send to phone and the QR for the phone path.
+5. Press Buy now. A QR appears with the total in rupees. Scan it with your phone camera, approve on the phone, and watch the TV flip to the order. (No phone to hand: use the demo card button.) Optionally show Send to phone.
 6. Show `/dashboard` (real funnel vs. labelled simulated) and `/eval`.
 7. Close on architecture: Gemini on Vertex AI, Cloud Run, grounded in a catalog.
 

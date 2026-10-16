@@ -109,7 +109,7 @@ func badJSON() (int, any) {
 
 func (s *Server) registerUCP(mux *http.ServeMux) {
 	mux.HandleFunc("GET /.well-known/ucp", s.ucpProfile)
-	mux.HandleFunc("GET /ucp/handlers/"+ucpDemoHandler, s.ucpHandlerDoc)
+	mux.HandleFunc("GET /ucp/handlers/{id}", s.ucpHandlerDoc)
 	mux.HandleFunc("GET /order/{id}", s.orderPage)
 
 	created := func(id string, ok bool) int {
@@ -195,6 +195,11 @@ func (s *Server) ucpProfile(w http.ResponseWriter, r *http.Request) {
 					"spec":                  base + "/ucp/handlers/" + ucpDemoHandler,
 					"available_instruments": []map[string]any{{"type": "demo_token"}},
 				}},
+				ucpUPIHandlerNm: []map[string]any{{
+					"id": ucpUPIHandler, "version": ucpVersion,
+					"spec":                  base + "/ucp/handlers/" + ucpUPIHandler,
+					"available_instruments": []map[string]any{{"type": "demo_upi"}},
+				}},
 			},
 		},
 		"keys": []any{}, // request signing is not implemented in this demo
@@ -207,15 +212,30 @@ func (s *Server) ucpProfile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) ucpHandlerDoc(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, 200, map[string]any{
-		"name": ucpHandlerName, "id": ucpDemoHandler, "version": ucpVersion,
-		"description": "Simulated payment handler for the Shop the Moment demo. No money moves anywhere.",
-		"complete_checkout": map[string]any{
-			"instrument": map[string]any{"handler_id": ucpDemoHandler, "type": "demo_token"},
-			"credential": map[string]string{"type": "demo_token", "token": ucpDemoTokenHead + "<anything>"},
-			"rule":       "Any token that starts with " + ucpDemoTokenHead + " is accepted. Other tokens are refused.",
-		},
-	})
+	switch r.PathValue("id") {
+	case ucpDemoHandler:
+		writeJSON(w, 200, map[string]any{
+			"name": ucpHandlerName, "id": ucpDemoHandler, "version": ucpVersion,
+			"description": "Simulated card handler for the Shop the Moment demo. No money moves anywhere.",
+			"complete_checkout": map[string]any{
+				"instrument": map[string]any{"handler_id": ucpDemoHandler, "type": "demo_token"},
+				"credential": map[string]string{"type": "demo_token", "token": ucpDemoTokenHead + "<anything>"},
+				"rule":       "Any token that starts with " + ucpDemoTokenHead + " is accepted. Other tokens are refused.",
+			},
+		})
+	case ucpUPIHandler:
+		writeJSON(w, 200, map[string]any{
+			"name": ucpUPIHandlerNm, "id": ucpUPIHandler, "version": ucpVersion,
+			"description": "Simulated UPI handler. The TV shows a QR that opens a demo approval page on the shopper's phone; approving it completes the checkout. It is not connected to any UPI app, bank or payment gateway, and no real UPI app will accept the QR.",
+			"complete_checkout": map[string]any{
+				"instrument": map[string]any{"handler_id": ucpUPIHandler, "type": "demo_upi"},
+				"credential": map[string]string{"type": "demo_upi", "token": ucpUPITokenHead + "<payment intent id>"},
+				"rule":       "The server issues the token only after the shopper approves on the demo approval page.",
+			},
+		})
+	default:
+		http.NotFound(w, r)
+	}
 }
 
 func (s *Server) orderPage(w http.ResponseWriter, r *http.Request) {
@@ -231,6 +251,6 @@ func (s *Server) orderPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	fmt.Fprintf(w, `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Demo order %s</title>
 <style>body{font:18px/1.45 system-ui,sans-serif;max-width:560px;margin:40px auto;padding:0 18px;color:#0e1118}h1{font-size:28px}.note{background:#fff3d6;padding:12px 14px;border-radius:12px}</style></head>
-<body><h1>Demo order %s</h1><p class="note">This is a simulation. No payment was taken and nothing will ship.</p><ul>%s</ul><p><strong>Total $%d.%02d</strong> (no tax or shipping modelled)</p><p>Placed %s</p></body></html>`,
+<body><h1>Demo order %s</h1><p class="note">This is a simulation. No payment was taken and nothing will ship.</p><ul>%s</ul><p><strong>Total ₹%d.%02d</strong> (no tax or shipping modelled)</p><p>Placed %s</p></body></html>`,
 		html.EscapeString(o.ID), html.EscapeString(o.ID), items.String(), o.Total/100, o.Total%100, o.PlacedAt.UTC().Format(time.RFC1123))
 }

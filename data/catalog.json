@@ -1,32 +1,387 @@
 {
-  "currency": "USD",
+  "currency": "INR",
   "products": [
-    {"id": "stride-pulse", "name": "Stride Pulse Runner", "brand": "Stride", "category": "sneakers", "price": 120, "colors": ["white", "black", "blue"], "attributes": ["mesh upper", "orange accent", "white midsole", "low-top", "running shoe"], "description": "Lightweight daily running shoe with a breathable mesh upper and responsive foam midsole."},
-    {"id": "stride-court", "name": "Stride Court Classic", "brand": "Stride", "category": "sneakers", "price": 95, "colors": ["white", "black"], "attributes": ["leather upper", "flat sole", "minimal", "low-top", "casual shoe"], "description": "Clean leather court sneaker for everyday wear."},
-    {"id": "nimbus-cloudwalk", "name": "Nimbus Cloudwalk", "brand": "Nimbus", "category": "sneakers", "price": 79, "colors": ["grey", "blue", "black"], "attributes": ["knit upper", "chunky sole", "cushioned", "running shoe"], "description": "Soft knit trainer with a thick cushioned sole."},
-    {"id": "dash-lite", "name": "Dash Lite Trainer", "brand": "Dash", "category": "sneakers", "price": 59, "colors": ["white", "black", "red"], "attributes": ["canvas upper", "lace-up", "lightweight", "gym shoe"], "description": "Budget-friendly lightweight trainer for the gym and daily errands."},
-
-    {"id": "arcline-trail", "name": "Arcline Trail 28L", "brand": "Arcline", "category": "backpack", "price": 110, "colors": ["green", "black", "orange"], "attributes": ["roll-top", "28 litre", "chest strap", "hiking", "water resistant"], "description": "Roll-top hiking pack with chest strap and water-resistant fabric."},
-    {"id": "arcline-city", "name": "Arcline City Pack", "brand": "Arcline", "category": "backpack", "price": 85, "colors": ["black", "grey", "navy"], "attributes": ["laptop sleeve", "minimal", "zip top", "commuter"], "description": "Slim commuter backpack with a padded laptop sleeve."},
-    {"id": "packwell-day", "name": "Packwell Daypack", "brand": "Packwell", "category": "backpack", "price": 49, "colors": ["black", "red", "blue"], "attributes": ["daypack", "two compartments", "zip top", "school bag"], "description": "Simple two-compartment daypack at an easy price."},
-
-    {"id": "korvo-halo", "name": "Korvo Halo ANC", "brand": "Korvo", "category": "headphones", "price": 199, "colors": ["black", "silver", "blue"], "attributes": ["over-ear", "noise cancelling", "padded headband", "wireless"], "description": "Over-ear wireless headphones with active noise cancelling."},
-    {"id": "korvo-pulse", "name": "Korvo Pulse On-Ear", "brand": "Korvo", "category": "headphones", "price": 89, "colors": ["black", "white", "red"], "attributes": ["on-ear", "foldable", "wireless", "padded headband"], "description": "Foldable on-ear wireless headphones for commuting."},
-    {"id": "sonic-buds", "name": "Sonic Buds Mini", "brand": "Sonic", "category": "headphones", "price": 39, "colors": ["white", "black", "pink"], "attributes": ["in-ear", "earbuds", "charging case", "wireless"], "description": "Compact true-wireless earbuds with a pocket charging case."},
-
-    {"id": "tempo-one", "name": "Tempo One Smartwatch", "brand": "Tempo", "category": "smartwatch", "price": 149, "colors": ["black", "silver", "pink"], "attributes": ["round dial", "silicone strap", "heart-rate sensor", "touchscreen"], "description": "Round-dial smartwatch with heart-rate tracking and a silicone strap."},
-    {"id": "tempo-lite", "name": "Tempo Lite Band", "brand": "Tempo", "category": "smartwatch", "price": 79, "colors": ["black", "blue", "green"], "attributes": ["square display", "silicone strap", "step counter", "touchscreen"], "description": "Square-display fitness watch with a week-long battery."},
-
-    {"id": "lumo-aviator", "name": "Lumo Aviator", "brand": "Lumo", "category": "sunglasses", "price": 89, "colors": ["gold", "silver", "black"], "attributes": ["aviator", "thin metal frame", "teardrop lens", "polarised"], "description": "Classic teardrop aviators with a thin metal frame and polarised lenses."},
-    {"id": "lumo-wayfarer", "name": "Lumo Wayfarer", "brand": "Lumo", "category": "sunglasses", "price": 69, "colors": ["black", "brown", "blue"], "attributes": ["wayfarer", "thick acetate frame", "square lens", "polarised"], "description": "Bold acetate wayfarers with square lenses."},
-
-    {"id": "hydra-steel", "name": "Hydra Steel 750ml", "brand": "Hydra", "category": "water_bottle", "price": 32, "colors": ["silver", "black", "green", "orange"], "attributes": ["stainless steel", "750 ml", "insulated", "screw cap"], "description": "Insulated stainless-steel bottle that keeps drinks cold for 24 hours."},
-    {"id": "hydra-lite", "name": "Hydra Lite 600ml", "brand": "Hydra", "category": "water_bottle", "price": 19, "colors": ["blue", "green", "pink"], "attributes": ["plastic", "600 ml", "flip cap", "lightweight"], "description": "Lightweight BPA-free bottle with a flip cap."},
-
-    {"id": "northpeak-shell", "name": "NorthPeak Storm Shell", "brand": "NorthPeak", "category": "jacket", "price": 140, "colors": ["orange", "black", "navy"], "attributes": ["waterproof", "hooded", "zip front", "shell jacket"], "description": "Waterproof hooded shell for wet-weather trips."},
-    {"id": "northpeak-fleece", "name": "NorthPeak Fleece Zip", "brand": "NorthPeak", "category": "jacket", "price": 85, "colors": ["grey", "navy", "green"], "attributes": ["fleece", "zip front", "stand collar", "warm layer"], "description": "Soft mid-layer fleece with a stand collar."},
-
-    {"id": "stride-cap", "name": "Stride Logo Cap", "brand": "Stride", "category": "cap", "price": 25, "colors": ["black", "white", "red"], "attributes": ["curved brim", "adjustable strap", "embroidered logo", "cotton"], "description": "Curved-brim cotton cap with an embroidered logo."},
-    {"id": "dash-snapback", "name": "Dash Snapback", "brand": "Dash", "category": "cap", "price": 29, "colors": ["black", "navy"], "attributes": ["flat brim", "snapback", "structured", "cotton"], "description": "Structured flat-brim snapback cap."}
+    {
+      "id": "stride-pulse",
+      "name": "Stride Pulse Runner",
+      "brand": "Stride",
+      "category": "sneakers",
+      "price": 9999,
+      "colors": [
+        "white",
+        "black",
+        "blue"
+      ],
+      "attributes": [
+        "mesh upper",
+        "orange accent",
+        "white midsole",
+        "low-top",
+        "running shoe"
+      ],
+      "description": "Lightweight daily running shoe with a breathable mesh upper and responsive foam midsole."
+    },
+    {
+      "id": "stride-court",
+      "name": "Stride Court Classic",
+      "brand": "Stride",
+      "category": "sneakers",
+      "price": 7999,
+      "colors": [
+        "white",
+        "black"
+      ],
+      "attributes": [
+        "leather upper",
+        "flat sole",
+        "minimal",
+        "low-top",
+        "casual shoe"
+      ],
+      "description": "Clean leather court sneaker for everyday wear."
+    },
+    {
+      "id": "nimbus-cloudwalk",
+      "name": "Nimbus Cloudwalk",
+      "brand": "Nimbus",
+      "category": "sneakers",
+      "price": 6499,
+      "colors": [
+        "grey",
+        "blue",
+        "black"
+      ],
+      "attributes": [
+        "knit upper",
+        "chunky sole",
+        "cushioned",
+        "running shoe"
+      ],
+      "description": "Soft knit trainer with a thick cushioned sole."
+    },
+    {
+      "id": "dash-lite",
+      "name": "Dash Lite Trainer",
+      "brand": "Dash",
+      "category": "sneakers",
+      "price": 4999,
+      "colors": [
+        "white",
+        "black",
+        "red"
+      ],
+      "attributes": [
+        "canvas upper",
+        "lace-up",
+        "lightweight",
+        "gym shoe"
+      ],
+      "description": "Budget-friendly lightweight trainer for the gym and daily errands."
+    },
+    {
+      "id": "arcline-trail",
+      "name": "Arcline Trail 28L",
+      "brand": "Arcline",
+      "category": "backpack",
+      "price": 8999,
+      "colors": [
+        "green",
+        "black",
+        "orange"
+      ],
+      "attributes": [
+        "roll-top",
+        "28 litre",
+        "chest strap",
+        "hiking",
+        "water resistant"
+      ],
+      "description": "Roll-top hiking pack with chest strap and water-resistant fabric."
+    },
+    {
+      "id": "arcline-city",
+      "name": "Arcline City Pack",
+      "brand": "Arcline",
+      "category": "backpack",
+      "price": 6999,
+      "colors": [
+        "black",
+        "grey",
+        "navy"
+      ],
+      "attributes": [
+        "laptop sleeve",
+        "minimal",
+        "zip top",
+        "commuter"
+      ],
+      "description": "Slim commuter backpack with a padded laptop sleeve."
+    },
+    {
+      "id": "packwell-day",
+      "name": "Packwell Daypack",
+      "brand": "Packwell",
+      "category": "backpack",
+      "price": 3999,
+      "colors": [
+        "black",
+        "red",
+        "blue"
+      ],
+      "attributes": [
+        "daypack",
+        "two compartments",
+        "zip top",
+        "school bag"
+      ],
+      "description": "Simple two-compartment daypack at an easy price."
+    },
+    {
+      "id": "korvo-halo",
+      "name": "Korvo Halo ANC",
+      "brand": "Korvo",
+      "category": "headphones",
+      "price": 15999,
+      "colors": [
+        "black",
+        "silver",
+        "blue"
+      ],
+      "attributes": [
+        "over-ear",
+        "noise cancelling",
+        "padded headband",
+        "wireless"
+      ],
+      "description": "Over-ear wireless headphones with active noise cancelling."
+    },
+    {
+      "id": "korvo-pulse",
+      "name": "Korvo Pulse On-Ear",
+      "brand": "Korvo",
+      "category": "headphones",
+      "price": 7499,
+      "colors": [
+        "black",
+        "white",
+        "red"
+      ],
+      "attributes": [
+        "on-ear",
+        "foldable",
+        "wireless",
+        "padded headband"
+      ],
+      "description": "Foldable on-ear wireless headphones for commuting."
+    },
+    {
+      "id": "sonic-buds",
+      "name": "Sonic Buds Mini",
+      "brand": "Sonic",
+      "category": "headphones",
+      "price": 2999,
+      "colors": [
+        "white",
+        "black",
+        "pink"
+      ],
+      "attributes": [
+        "in-ear",
+        "earbuds",
+        "charging case",
+        "wireless"
+      ],
+      "description": "Compact true-wireless earbuds with a pocket charging case."
+    },
+    {
+      "id": "tempo-one",
+      "name": "Tempo One Smartwatch",
+      "brand": "Tempo",
+      "category": "smartwatch",
+      "price": 11999,
+      "colors": [
+        "black",
+        "silver",
+        "pink"
+      ],
+      "attributes": [
+        "round dial",
+        "silicone strap",
+        "heart-rate sensor",
+        "touchscreen"
+      ],
+      "description": "Round-dial smartwatch with heart-rate tracking and a silicone strap."
+    },
+    {
+      "id": "tempo-lite",
+      "name": "Tempo Lite Band",
+      "brand": "Tempo",
+      "category": "smartwatch",
+      "price": 6499,
+      "colors": [
+        "black",
+        "blue",
+        "green"
+      ],
+      "attributes": [
+        "square display",
+        "silicone strap",
+        "step counter",
+        "touchscreen"
+      ],
+      "description": "Square-display fitness watch with a week-long battery."
+    },
+    {
+      "id": "lumo-aviator",
+      "name": "Lumo Aviator",
+      "brand": "Lumo",
+      "category": "sunglasses",
+      "price": 7499,
+      "colors": [
+        "gold",
+        "silver",
+        "black"
+      ],
+      "attributes": [
+        "aviator",
+        "thin metal frame",
+        "teardrop lens",
+        "polarised"
+      ],
+      "description": "Classic teardrop aviators with a thin metal frame and polarised lenses."
+    },
+    {
+      "id": "lumo-wayfarer",
+      "name": "Lumo Wayfarer",
+      "brand": "Lumo",
+      "category": "sunglasses",
+      "price": 5499,
+      "colors": [
+        "black",
+        "brown",
+        "blue"
+      ],
+      "attributes": [
+        "wayfarer",
+        "thick acetate frame",
+        "square lens",
+        "polarised"
+      ],
+      "description": "Bold acetate wayfarers with square lenses."
+    },
+    {
+      "id": "hydra-steel",
+      "name": "Hydra Steel 750ml",
+      "brand": "Hydra",
+      "category": "water_bottle",
+      "price": 2499,
+      "colors": [
+        "silver",
+        "black",
+        "green",
+        "orange"
+      ],
+      "attributes": [
+        "stainless steel",
+        "750 ml",
+        "insulated",
+        "screw cap"
+      ],
+      "description": "Insulated stainless-steel bottle that keeps drinks cold for 24 hours."
+    },
+    {
+      "id": "hydra-lite",
+      "name": "Hydra Lite 600ml",
+      "brand": "Hydra",
+      "category": "water_bottle",
+      "price": 1499,
+      "colors": [
+        "blue",
+        "green",
+        "pink"
+      ],
+      "attributes": [
+        "plastic",
+        "600 ml",
+        "flip cap",
+        "lightweight"
+      ],
+      "description": "Lightweight BPA-free bottle with a flip cap."
+    },
+    {
+      "id": "northpeak-shell",
+      "name": "NorthPeak Storm Shell",
+      "brand": "NorthPeak",
+      "category": "jacket",
+      "price": 11499,
+      "colors": [
+        "orange",
+        "black",
+        "navy"
+      ],
+      "attributes": [
+        "waterproof",
+        "hooded",
+        "zip front",
+        "shell jacket"
+      ],
+      "description": "Waterproof hooded shell for wet-weather trips."
+    },
+    {
+      "id": "northpeak-fleece",
+      "name": "NorthPeak Fleece Zip",
+      "brand": "NorthPeak",
+      "category": "jacket",
+      "price": 6999,
+      "colors": [
+        "grey",
+        "navy",
+        "green"
+      ],
+      "attributes": [
+        "fleece",
+        "zip front",
+        "stand collar",
+        "warm layer"
+      ],
+      "description": "Soft mid-layer fleece with a stand collar."
+    },
+    {
+      "id": "stride-cap",
+      "name": "Stride Logo Cap",
+      "brand": "Stride",
+      "category": "cap",
+      "price": 1999,
+      "colors": [
+        "black",
+        "white",
+        "red"
+      ],
+      "attributes": [
+        "curved brim",
+        "adjustable strap",
+        "embroidered logo",
+        "cotton"
+      ],
+      "description": "Curved-brim cotton cap with an embroidered logo."
+    },
+    {
+      "id": "dash-snapback",
+      "name": "Dash Snapback",
+      "brand": "Dash",
+      "category": "cap",
+      "price": 2299,
+      "colors": [
+        "black",
+        "navy"
+      ],
+      "attributes": [
+        "flat brim",
+        "snapback",
+        "structured",
+        "cotton"
+      ],
+      "description": "Structured flat-brim snapback cap."
+    }
   ]
 }

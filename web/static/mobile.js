@@ -17,7 +17,7 @@
     for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
     return el;
   }
-  const money = (v, cur) => new Intl.NumberFormat('en-US', { style: 'currency', currency: cur || 'USD', maximumFractionDigits: v % 1 ? 2 : 0 }).format(v);
+  const money = (v, cur) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: cur || 'INR', maximumFractionDigits: v % 1 ? 2 : 0 }).format(v);
   const img = (id, color) => `/img/${encodeURIComponent(id)}.svg?color=${encodeURIComponent(color || '')}`;
 
   async function api(path, body) {

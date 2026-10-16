@@ -38,6 +38,9 @@ const (
 	ucpIdemTTL       = 24 * time.Hour
 	ucpMaxIdemKeys   = 5000
 	ucpDemoTokenHead = "demo_tok_"
+	ucpUPIHandler    = "demo_upi"
+	ucpUPIHandlerNm  = "dev.shop_the_moment.demo_upi"
+	ucpUPITokenHead  = "demo_upi_tok_"
 )
 
 // ---------------------------------------------------------------- wire types ---
@@ -221,7 +224,10 @@ func (u *UCP) meta(status string, caps ...string) ucpMeta {
 
 func (u *UCP) checkoutMeta(status string) ucpMeta {
 	m := u.meta(status, ucpCapCheckout, ucpCapCart)
-	m.PaymentHandlers = map[string][]ucpHandlerRef{ucpHandlerName: {{ID: ucpDemoHandler, Version: ucpVersion}}}
+	m.PaymentHandlers = map[string][]ucpHandlerRef{
+		ucpHandlerName:  {{ID: ucpDemoHandler, Version: ucpVersion}},
+		ucpUPIHandlerNm: {{ID: ucpUPIHandler, Version: ucpVersion}},
+	}
 	return m
 }
 
@@ -402,10 +408,12 @@ func (u *UCP) checkoutResp(c *ucpCheckout, base string) ucpCheckoutResp {
 		ExpiresAt: c.Expires.UTC().Format(time.RFC3339),
 		Links:     []ucpLink{{Type: "terms_of_service", URL: base + "/ucp/handlers/" + ucpDemoHandler, Title: "Demo only: nothing is charged"}}}
 	if c.Status == "ready_for_complete" || c.Status == "incomplete" {
-		r.Payment = &ucpPayment{Instruments: []ucpInstrument{{
-			ID: "demo_card_4242", HandlerID: ucpDemoHandler, Type: "demo_token", Selected: true,
-			Display: map[string]any{"brand": "Demo card", "last_digits": "4242", "description": "Simulated payment. No money moves."},
-		}}}
+		r.Payment = &ucpPayment{Instruments: []ucpInstrument{
+			{ID: "demo_upi_qr", HandlerID: ucpUPIHandler, Type: "demo_upi", Selected: true,
+				Display: map[string]any{"description": "Demo UPI: scan the QR and approve on your phone. No money moves."}},
+			{ID: "demo_card_4242", HandlerID: ucpDemoHandler, Type: "demo_token",
+				Display: map[string]any{"brand": "Demo card", "last_digits": "4242", "description": "Simulated payment. No money moves."}},
+		}}
 	}
 	return r
 }
@@ -500,10 +508,16 @@ func (u *UCP) CompleteCheckout(id string, in ucpCheckoutReq, base string) ucpChe
 		return u.checkoutErr(ucpMessage{Type: "error", Code: "payment_required", Content: "Send exactly one payment instrument.", Severity: "requires_buyer_input", Path: "$.payment.instruments"})
 	}
 	ins := in.Payment.Instruments[0]
-	if ins.HandlerID != ucpDemoHandler {
-		return u.checkoutErr(ucpMessage{Type: "error", Code: "unsupported_handler", Content: "Only the demo_pay handler is supported.", Severity: "requires_buyer_input", Path: "$.payment.instruments[0].handler_id"})
+	var head string
+	switch ins.HandlerID {
+	case ucpDemoHandler:
+		head = ucpDemoTokenHead
+	case ucpUPIHandler:
+		head = ucpUPITokenHead
+	default:
+		return u.checkoutErr(ucpMessage{Type: "error", Code: "unsupported_handler", Content: "Supported handlers are demo_pay and demo_upi.", Severity: "requires_buyer_input", Path: "$.payment.instruments[0].handler_id"})
 	}
-	if ins.Credential == nil || !strings.HasPrefix(ins.Credential.Token, ucpDemoTokenHead) {
+	if ins.Credential == nil || !strings.HasPrefix(ins.Credential.Token, head) {
 		return u.checkoutErr(ucpMessage{Type: "error", Code: "payment_credential_invalid", Content: "The demo payment token is missing or invalid. No payment was taken.", Severity: "requires_buyer_input", Path: "$.payment.instruments[0].credential"})
 	}
 	orderID := "DEMO-" + upper(newID(6))
