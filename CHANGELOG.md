@@ -3,6 +3,11 @@
 Versioning: [Semantic Versioning](https://semver.org). Each release is a git tag `vX.Y.Z` and a section below.
 Pre-1.0: minor versions may change behaviour; patch versions are fixes only.
 
+## [0.4.2] - 2026-10-17
+
+### Fixed
+- Buy now and Send to phone showed "not found" when the server had lost the viewer's session (a redeploy or restart, or a tab left open for hours). The TV page now starts a fresh session quietly and repeats the call once. `scripts/session_recover.mjs` tests it.
+
 ## [0.4.1] - 2026-10-17
 
 ### Changed

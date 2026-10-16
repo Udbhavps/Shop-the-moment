@@ -39,15 +39,28 @@
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   const img = (id, color) => `/img/${encodeURIComponent(id)}.svg?color=${encodeURIComponent(color || '')}`;
 
-  async function api(path, body, method) {
+  async function api(path, body, method, retried) {
     const res = await fetch(path, {
       method: method || (body ? 'POST' : 'GET'),
       headers: body ? { 'Content-Type': 'application/json' } : undefined,
       body: body ? JSON.stringify(body) : undefined,
     });
     const data = await res.json().catch(() => ({}));
+    // The server keeps sessions in memory, so a restart or a long idle tab loses ours.
+    // Start a fresh session quietly and repeat the call once instead of showing "not found".
+    if (res.status === 404 && !retried && S.session && path.includes(`/api/sessions/${S.session.id}`) && /not found|expired/i.test(data.error || '')) {
+      const old = S.session.id;
+      await recoverSession();
+      return api(path.replace(old, S.session.id), body, method, true);
+    }
     if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
     return data;
+  }
+
+  async function recoverSession() {
+    const sess = await api('/api/sessions', { ad_id: ad() ? ad().id : 'morning-run' });
+    S.session = sess.session; S.mobileUrl = sess.mobile_url; S.qrUrl = sess.qr_url;
+    S.cart = []; S.selectedCards = [];
   }
   function ev(name, props) {
     if (!S.session) return;
