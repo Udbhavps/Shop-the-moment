@@ -620,3 +620,14 @@ func TestShowStoryLayer(t *testing.T) {
 		t.Fatalf("licensed: %v", prod)
 	}
 }
+
+func TestGenConfigThinking(t *testing.T) {
+	flash := (&Gemini{Model: "gemini-2.5-flash"}).genConfig(map[string]any{"temperature": 0.1})
+	if flash["thinkingConfig"] == nil || flash["temperature"] != 0.1 {
+		t.Fatalf("flash config: %v", flash)
+	}
+	pro := (&Gemini{Model: "gemini-2.5-pro"}).genConfig(map[string]any{"temperature": 0.1})
+	if pro["thinkingConfig"] != nil {
+		t.Fatalf("pro cannot disable thinking: %v", pro)
+	}
+}

@@ -3,6 +3,11 @@
 Versioning: [Semantic Versioning](https://semver.org). Each release is a git tag `vX.Y.Z` and a section below.
 Pre-1.0: minor versions may change behaviour; patch versions are fixes only.
 
+## [0.4.1] - 2026-10-17
+
+### Changed
+- Live analysis: Flash models now run without extended thinking (lower latency; Pro models are unchanged), the paused frame is sent at 1920x1080 instead of 1280x720, and the prompt asks the model to look closely for small printed wordmarks. First live `/eval` on Cloud Run: 100% exact-claim precision (11 of 11), 0 wrong exact claims, 95% items found (18 of 19), 74% exact/not-exact decisions right (14 of 19), 5.6 s average latency. The misses were all cautious (a readable brand not read), never a wrong claim.
+
 ## [0.4.0] - 2026-10-16
 
 ### Added

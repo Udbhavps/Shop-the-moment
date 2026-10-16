@@ -6,7 +6,7 @@
   function rasterise(url) {
     return new Promise((resolve, reject) => {
       const im = new Image();
-      im.onload = () => { const c = document.createElement('canvas'); c.width = 1280; c.height = 720; c.getContext('2d').drawImage(im, 0, 0, 1280, 720); resolve(c.toDataURL('image/jpeg', 0.85)); };
+      im.onload = () => { const c = document.createElement('canvas'); c.width = 1920; c.height = 1080; c.getContext('2d').drawImage(im, 0, 0, 1920, 1080); resolve(c.toDataURL('image/jpeg', 0.9)); };
       im.onerror = () => reject(new Error('could not load ' + url));
       im.src = url;
     });

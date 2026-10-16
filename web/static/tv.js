@@ -144,9 +144,9 @@
     const el = S.layers[S.layer];
     if (el.readyState < 2 || !el.videoWidth) return null;
     const c = document.createElement('canvas');
-    c.width = 1280; c.height = 720;
-    c.getContext('2d').drawImage(el, 0, 0, 1280, 720);
-    try { return c.toDataURL('image/jpeg', 0.88); } catch (e) { return null; }
+    c.width = 1920; c.height = 1080; // full HD keeps small brand text readable for the model
+    c.getContext('2d').drawImage(el, 0, 0, 1920, 1080);
+    try { return c.toDataURL('image/jpeg', 0.9); } catch (e) { return null; }
   }
 
   // ----------------------------------------------------------- the panel ---

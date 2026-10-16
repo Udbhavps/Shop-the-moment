@@ -229,7 +229,7 @@ Look at this single frame from a TV ad or show and list up to 4 distinct consume
 
 Rules:
 - Report only what you can see. Do not guess prices, model names, product IDs or availability.
-- brand_text: copy a brand name or logo text ONLY if it is legible in the frame; otherwise use an empty string. Never infer a brand from the product's style.
+- brand_text: copy a brand name or logo text ONLY if it is legible in the frame; otherwise use an empty string. Never infer a brand from the product's style. Small printed wordmarks count when you can actually read them (watch faces, bag panels, cap fronts, jacket chests, pendant medallions, bottle labels, headbands): look closely before deciding that none is legible.
 - category must be one of: sneakers, backpack, headphones, smartwatch, sunglasses, water_bottle, jacket, cap, pendant, other.
 - primary_color must be one simple colour word (white, black, blue, red, green, orange, grey, navy, silver, gold, pink, brown).
 - attributes: 2-5 short visible features (materials, shape, notable details).
@@ -272,17 +272,27 @@ func (g *Gemini) AnalyzeFrame(ctx context.Context, img []byte, mime string) ([]C
 			map[string]any{"inlineData": map[string]any{"mimeType": mime, "data": base64.StdEncoding.EncodeToString(img)}},
 			map[string]any{"text": analyzePrompt},
 		}}},
-		"generationConfig": map[string]any{
+		"generationConfig": g.genConfig(map[string]any{
 			"temperature":      0.1,
 			"responseMimeType": "application/json",
 			"responseSchema":   analysisSchema(),
-		},
+		}),
 	}
 	resp, err := g.generate(ctx, body)
 	if err != nil {
 		return nil, err
 	}
 	return parseCandidates(resp.text())
+}
+
+// genConfig adds "no extended thinking" for Flash models: recognising products in a
+// frame does not need it, and it cuts several seconds of latency. Models that
+// cannot turn thinking off (Pro) are left alone.
+func (g *Gemini) genConfig(cfg map[string]any) map[string]any {
+	if strings.Contains(strings.ToLower(g.Model), "flash") {
+		cfg["thinkingConfig"] = map[string]any{"thinkingBudget": 0}
+	}
+	return cfg
 }
 
 func parseCandidates(txt string) ([]Candidate, error) {
@@ -414,7 +424,7 @@ func (g *Gemini) Chat(ctx context.Context, system string, history []ChatTurn, us
 			"contents":          contents,
 			"tools":             toolDeclarations(),
 			"toolConfig":        map[string]any{"functionCallingConfig": map[string]any{"mode": "AUTO"}},
-			"generationConfig":  map[string]any{"temperature": 0.3, "maxOutputTokens": 600},
+			"generationConfig":  g.genConfig(map[string]any{"temperature": 0.3, "maxOutputTokens": 600}),
 		}
 		resp, err := g.generate(ctx, body)
 		if err != nil {
