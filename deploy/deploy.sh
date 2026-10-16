@@ -9,6 +9,14 @@ SA="stm-runner"
 gcloud config set project "$PROJECT_ID"
 gcloud services enable run.googleapis.com aiplatform.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
 
+# Newer projects do not give the default build account the roles that deploying
+# from source needs. Grant them (safe to repeat).
+PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format 'value(projectNumber)')
+BUILD_SA="$PROJECT_NUMBER-compute@developer.gserviceaccount.com"
+for role in roles/cloudbuild.builds.builder roles/storage.objectViewer roles/artifactregistry.writer roles/logging.logWriter; do
+  gcloud projects add-iam-policy-binding "$PROJECT_ID" --member "serviceAccount:$BUILD_SA" --role "$role" --condition=None >/dev/null
+done
+
 gcloud iam service-accounts describe "$SA@$PROJECT_ID.iam.gserviceaccount.com" >/dev/null 2>&1 || \
   gcloud iam service-accounts create "$SA" --display-name "Shop the Moment runtime"
 gcloud projects add-iam-policy-binding "$PROJECT_ID" \
