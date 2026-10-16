@@ -382,6 +382,43 @@
         "cotton"
       ],
       "description": "Structured flat-brim snapback cap."
+    },
+    {
+      "id": "tidewell-compass",
+      "name": "Tidewell Harbor Compass Pendant",
+      "brand": "Tidewell",
+      "category": "pendant",
+      "price": 3499,
+      "colors": [
+        "gold",
+        "silver"
+      ],
+      "licensed": "Neon Harbor",
+      "attributes": [
+        "brass medallion",
+        "compass-rose engraving",
+        "22 inch chain",
+        "gift box"
+      ],
+      "description": "Official replica of the compass pendant from Neon Harbor. Brass medallion, engraved compass rose, comes in a numbered gift box."
+    },
+    {
+      "id": "aster-orbit",
+      "name": "Aster Orbit Pendant",
+      "brand": "Aster",
+      "category": "pendant",
+      "price": 1999,
+      "colors": [
+        "silver",
+        "gold",
+        "black"
+      ],
+      "attributes": [
+        "round medallion",
+        "fine chain",
+        "hypoallergenic steel"
+      ],
+      "description": "Minimal round pendant on a fine chain. Hypoallergenic steel, everyday wear."
     }
   ]
 }

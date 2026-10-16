@@ -69,7 +69,7 @@
     const bar = $('adbar');
     bar.replaceChildren(
       ...S.ads.map((a, i) => h('button', { type: 'button', 'aria-pressed': String(i === S.adIdx), onclick: () => startAd(i) }, a.title)),
-      h('span', { class: 'note' }, 'Sample ads made for this demo'),
+      h('span', { class: 'note' }, 'Sample ads and a sample show, made for this demo'),
     );
   }
 
@@ -279,15 +279,49 @@
       body.append(h('div', { class: 'status' }, 'No products found in this scene. Try another moment of the ad.'));
     } else {
       body.append(h('div', { class: 'verdict' }, h('div', {}, h('strong', {}, d.match_level === 'exact' ? 'Exact match. ' : d.match_level === 'similar' ? 'Not an exact match. ' : 'Not in the catalog. '), d.note)));
+      if (d.story) body.append(storyCard(d.story));
       if (d.exact) {
         body.append(h('div', {}, h('h3', { class: 'group-title' }, h('span', { class: 'tag' }, 'Exact match')), h('div', { class: 'cards one' }, card(d.exact, { hero: true }))));
       }
+      const look = lookFor(d);
+      if (look) body.append(h('button', { type: 'button', class: 'btn look focusable', onclick: () => shopLook(look) },
+        `Shop ${look.character.split(' ')[0]}'s look`, h('span', { class: 'sub' }, `${look.items.length} items · ${money(look.total)}`)));
       if (d.similar && d.similar.length) {
         body.append(h('div', {}, h('h3', { class: 'group-title' }, h('span', { class: 'tag similar' }, 'Similar'), d.exact ? 'Other options' : 'Closest in the catalog'),
           h('div', { class: 'cards many' }, d.similar.map((m) => card(m, { similar: true, alt: true })))));
       }
     }
     setSuggestions();
+  }
+
+  // ---- show tie-in: story card and "shop the look" ----
+  function storyCard(st) {
+    const kind = st.kind === 'prop' ? 'Prop from the show' : `Worn by ${st.character}`;
+    return h('div', { class: `story ${st.kind}` },
+      h('div', { class: 'kind' }, kind),
+      h('p', {}, st.moment),
+      h('div', { class: 'from' }, `${st.show} · ${st.episode}`, h('span', {}, ' · from the show\'s scene notes')));
+  }
+
+  // Everything in this scene tied to one character that we can match exactly.
+  function lookFor(d) {
+    if (!d.story || !S.analysis) return null;
+    const items = S.analysis.detections.filter((x) => x.story && x.story.character === d.story.character && x.exact);
+    if (items.length < 2) return null;
+    const total = items.reduce((t, x) => t + x.exact.product.price, 0);
+    return { character: d.story.character, items, total };
+  }
+
+  async function shopLook(look) {
+    try {
+      for (const x of look.items) {
+        await api(`/api/sessions/${S.session.id}/cart`, { product_id: x.exact.product.id, color: x.exact.color || x.exact.product.variants[0].color, delta: 1, channel: 'tv' });
+      }
+      await refreshSession();
+      openPay();
+    } catch (e) {
+      $('reply').textContent = `Couldn't add that look. ${e.message}`;
+    }
   }
 
   function setSuggestions() {
@@ -326,6 +360,7 @@
       h('div', {},
         h('h2', {}, p.name),
         h('div', { class: 'price' }, money(p.price)),
+        p.licensed ? h('div', { class: 'licensed' }, `Official ${p.licensed} merchandise`) : null,
         h('div', { class: 'colorname' }, color),
         h('div', { class: 'swatches', role: 'group', 'aria-label': 'Colours' }, sw),
       ),

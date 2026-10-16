@@ -37,7 +37,7 @@ var colorAliases = map[string]string{
 	"rose": "pink", "purple": "blue", "charcoal": "grey", "maroon": "red",
 }
 
-var knownCategories = []string{"sneakers", "backpack", "headphones", "smartwatch", "sunglasses", "water_bottle", "jacket", "cap"}
+var knownCategories = []string{"sneakers", "backpack", "headphones", "smartwatch", "sunglasses", "water_bottle", "jacket", "cap", "pendant"}
 
 // categoryWords maps free-text words to catalog categories.
 var categoryWords = map[string]string{
@@ -48,6 +48,7 @@ var categoryWords = map[string]string{
 	"sunglasses": "sunglasses", "sunglass": "sunglasses", "shades": "sunglasses", "glasses": "sunglasses",
 	"bottle": "water_bottle", "bottles": "water_bottle", "flask": "water_bottle",
 	"jacket": "jacket", "jackets": "jacket", "coat": "jacket", "fleece": "jacket", "shell": "jacket",
+	"pendant": "pendant", "pendants": "pendant", "necklace": "pendant", "necklaces": "pendant", "locket": "pendant", "chain": "pendant", "jewellery": "pendant", "jewelry": "pendant",
 	"cap": "cap", "caps": "cap", "hat": "cap", "hats": "cap", "snapback": "cap",
 }
 
@@ -97,6 +98,7 @@ type Product struct {
 	Attributes  []string  `json:"attributes"`
 	Description string    `json:"description"`
 	Variants    []Variant `json:"variants"`
+	Licensed    string    `json:"licensed,omitempty"` // show this is official merchandise for
 }
 
 type rawProduct struct {
@@ -109,6 +111,7 @@ type rawProduct struct {
 	OutOfStock  []string `json:"out_of_stock"`
 	Attributes  []string `json:"attributes"`
 	Description string   `json:"description"`
+	Licensed    string   `json:"licensed"`
 }
 
 type Catalog struct {
@@ -137,7 +140,7 @@ func LoadCatalog() (*Catalog, error) {
 			return nil, fmt.Errorf("catalog: %s has unknown category %q", r.ID, r.Category)
 		}
 		p := Product{ID: r.ID, Name: r.Name, Brand: r.Brand, Category: r.Category, Price: r.Price,
-			Currency: raw.Currency, Attributes: r.Attributes, Description: r.Description}
+			Currency: raw.Currency, Attributes: r.Attributes, Description: r.Description, Licensed: r.Licensed}
 		oos := map[string]bool{}
 		for _, o := range r.OutOfStock {
 			oos[o] = true

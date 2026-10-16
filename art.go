@@ -151,6 +151,14 @@ func drawProduct(category, id, color, brand string) string {
 		fmt.Fprintf(&b, `<path d="M28 114 Q100 100 176 124 Q180 142 152 144 Q92 130 28 128 Z" fill="%s"/>`, dark)
 		fmt.Fprintf(&b, `<circle cx="100" cy="49" r="5" fill="%s"/>`, darker)
 		b.WriteString(text(100, 94, 15, ink, "middle"))
+	case "pendant":
+		fmt.Fprintf(&b, `<path d="M34 24 Q36 108 100 120 Q164 108 166 24" fill="none" stroke="%s" stroke-width="4" stroke-linecap="round" stroke-dasharray="1 6"/>`, shade(base, 25))
+		fmt.Fprintf(&b, `<circle cx="100" cy="150" r="40" fill="%s"/><circle cx="100" cy="150" r="33" fill="%s"/>`, dark, base)
+		fmt.Fprintf(&b, `<circle cx="100" cy="116" r="6" fill="none" stroke="%s" stroke-width="3"/>`, dark)
+		fmt.Fprintf(&b, `<path d="M100 122 L106 144 L128 150 L106 156 L100 178 L94 156 L72 150 L94 144 Z" fill="%s"/>`, darker)
+		if word != "" {
+			fmt.Fprintf(&b, `<text x="100" y="196" font-family="Helvetica, Arial, sans-serif" font-size="9" font-weight="800" letter-spacing="2" text-anchor="middle" fill="#e8d9c4">%s</text>`, word)
+		}
 	case "lamp":
 		b.WriteString(`<defs><radialGradient id="glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffe9b0" stop-opacity=".85"/><stop offset="1" stop-color="#ffe9b0" stop-opacity="0"/></radialGradient></defs>`)
 		b.WriteString(`<circle cx="100" cy="72" r="72" fill="url(#glow)"/>`)
@@ -216,6 +224,8 @@ func groundY(category string) int {
 		return 178
 	case "cap":
 		return 146
+	case "pendant":
+		return 192
 	case "lamp":
 		return 190
 	}
@@ -243,6 +253,8 @@ func artBounds(category string) (x0, y0, x1, y1 int) {
 		return 8, 4, 192, 180
 	case "cap":
 		return 26, 44, 180, 148
+	case "pendant":
+		return 30, 20, 170, 200
 	case "lamp":
 		return 28, 24, 172, 194
 	}

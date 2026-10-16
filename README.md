@@ -33,6 +33,14 @@ Rules the code enforces:
 - Checkout is a simulation. No payment is taken. The QR holds only a random session id.
 - The dashboard's top funnel is real events from this deployment; the second is a labelled SIMULATED sample. Nothing here claims integration with any Google ad system.
 
+## Shows and films: the story layer
+
+The same pause-and-shop flow works on scripted content, where viewers want what a character wears and the props that matter to the plot. The sample show "Neon Harbor" (fictional) demonstrates it:
+- **Worn by**: items tied to a character show who wears them and in which scene.
+- **Props**: story objects such as the Harbor Compass pendant are labelled as props, with an official replica as merchandise.
+- **Shop the look**: all exactly-matched items for one character go into the cart in one step.
+- Where the story comes from: per-scene metadata from the studio (cast, wardrobe, props by timestamp). The AI finds and matches the products; it does not know the plot. If a costume piece has no legible logo it stays "similar".
+
 ## Cart and checkout: Universal Commerce Protocol (UCP)
 
 The TV and the phone both build the cart and check out through a demo merchant that speaks UCP over REST (spec version `2026-04-08`, https://ucp.dev/2026-04-08/specification/overview/). You can buy entirely on the TV ("Buy now"), or send items to the phone, or both: it is the same cart.
@@ -107,8 +115,9 @@ Sessions are in memory, so the service must run with `--max-instances=1` (the sc
 3. Open the hidden-brand backpack scene: only "similar", and say why it is not claimed as exact.
 4. Ask "Show me a cheaper one" and "this in blue"; show tool-call trace and catalog prices.
 5. Press Buy now. A QR appears with the total in rupees. Scan it with your phone camera, approve on the phone, and watch the TV flip to the order. (No phone to hand: use the demo card button.) Optionally show Send to phone.
-6. Show `/dashboard` (real funnel vs. labelled simulated) and `/eval`.
-7. Close on architecture: Gemini on Vertex AI, Cloud Run, grounded in a catalog.
+6. Open "Neon Harbor": pause, show "Worn by Mira Vale", the prop card and the official replica, then "Shop Mira's look".
+7. Show `/dashboard` (real funnel vs. labelled simulated) and `/eval`.
+8. Close on architecture: Gemini on Vertex AI, Cloud Run, grounded in a catalog.
 
 ## Submission checklist
 PDF deck, public video of 3 minutes or less, category Retail & Commerce, deployed URL, deadline Oct 18, 2026 (confirm the exact time and zone on the Hack2skill dashboard).

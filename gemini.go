@@ -225,12 +225,12 @@ func (r *genResponse) text() string {
 // ---------------------------------------------------------------- vision ---
 
 const analyzePrompt = `You are the product-recognition step of a shoppable-TV prototype.
-Look at this single frame from a TV ad and list up to 4 distinct consumer products that are clearly visible and could plausibly be bought (shoes, bags, headphones, watches, sunglasses, bottles, jackets, caps, and similar).
+Look at this single frame from a TV ad or show and list up to 4 distinct consumer products that are clearly visible and could plausibly be bought (shoes, bags, headphones, watches, sunglasses, bottles, jackets, caps, pendants and necklaces, and similar).
 
 Rules:
 - Report only what you can see. Do not guess prices, model names, product IDs or availability.
 - brand_text: copy a brand name or logo text ONLY if it is legible in the frame; otherwise use an empty string. Never infer a brand from the product's style.
-- category must be one of: sneakers, backpack, headphones, smartwatch, sunglasses, water_bottle, jacket, cap, other.
+- category must be one of: sneakers, backpack, headphones, smartwatch, sunglasses, water_bottle, jacket, cap, pendant, other.
 - primary_color must be one simple colour word (white, black, blue, red, green, orange, grey, navy, silver, gold, pink, brown).
 - attributes: 2-5 short visible features (materials, shape, notable details).
 - evidence: one short sentence describing what you saw that supports the label.

@@ -3,6 +3,19 @@
 Versioning: [Semantic Versioning](https://semver.org). Each release is a git tag `vX.Y.Z` and a section below.
 Pre-1.0: minor versions may change behaviour; patch versions are fixes only.
 
+## [0.4.0] - 2026-10-16
+
+### Added
+- A sample show, "Neon Harbor" (fictional, two scenes), next to the three ads. Items tied to the story carry a story card: "Worn by Mira Vale", or "Prop from the show" with why it matters.
+- "Shop Mira's look": one button adds every exactly-matched item tied to a character to the UCP cart and goes to checkout.
+- Official show merchandise: the catalog marks licensed products (`licensed`), shown as a badge. New `pendant` category with the replica Harbor Compass Pendant and a generic pendant as the similar option.
+- `scripts/show_flow.mjs` and `scripts/all_scenes.mjs` browser checks.
+
+### Notes
+- Story text comes from per-scene metadata (cast, wardrobe, props), the way a studio would supply it. A vision model cannot know who wears what, so the story is never claimed as AI output. It attaches to live Gemini results by matching category and colour.
+- Costume pieces with no legible logo stay "similar", never "exact", but keep their story.
+- All characters and brands are fictional.
+
 ## [0.3.0] - 2026-10-16
 
 ### Added

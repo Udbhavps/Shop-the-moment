@@ -35,6 +35,7 @@ type Detection struct {
 	InCatalog  bool      `json:"category_in_catalog"`
 	Note       string    `json:"note"`
 	MatchLevel string    `json:"match_level"` // exact | similar | none
+	Story      *Story    `json:"story,omitempty"`
 }
 
 func normBrand(s string) string {

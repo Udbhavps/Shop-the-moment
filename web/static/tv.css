@@ -227,3 +227,13 @@ body.tv { overflow: hidden; display: grid; place-items: center; background: #050
 .pay-right .pay-line img { width: 80px; height: 80px; }
 .pay-right .pay-line .n { font-size: 28px; }
 .pay-right .pay-line .amt { font-size: 28px; min-width: 130px; }
+
+/* ---- show tie-in ---- */
+.story { border-left: 6px solid var(--focus); background: var(--panel-2); border-radius: 0 16px 16px 0; padding: 14px 22px 16px; }
+.story .kind { font-size: 25px; font-weight: 800; color: var(--focus); }
+.story p { margin: 6px 0 8px; font-size: 24px; line-height: 1.35; color: var(--text); }
+.story .from { font-size: 18px; color: var(--muted); }
+.story .from span { opacity: 0.8; }
+.btn.look { display: flex; align-items: baseline; justify-content: space-between; width: 100%; background: var(--focus); color: #2b2100; }
+.btn.look .sub { font-size: 22px; font-weight: 650; opacity: 0.8; }
+.licensed { display: inline-block; margin: 6px 0 2px; font-size: 20px; font-weight: 750; color: var(--focus); border: 2px solid var(--focus); border-radius: 999px; padding: 2px 14px; }

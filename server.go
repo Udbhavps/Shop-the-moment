@@ -662,7 +662,7 @@ func (s *Server) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 	if !readJSON(w, r, 6<<20, &req) {
 		return
 	}
-	_, scene := findScene(s.ads, req.SceneID)
+	ad, scene := findScene(s.ads, req.SceneID)
 	if scene == nil {
 		writeErr(w, 400, "unknown scene")
 		return
@@ -709,6 +709,9 @@ func (s *Server) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 		cands = CachedCandidates(s.cat, scene)
 	}
 	res.Detections = Ground(s.cat, cands)
+	for i := range res.Detections {
+		res.Detections[i].Story = storyFor(s.cat, ad, scene, res.Detections[i].Candidate)
+	}
 	res.LatencyMS = time.Since(start).Milliseconds()
 	writeJSON(w, 200, res)
 }

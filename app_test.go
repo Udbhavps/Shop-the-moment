@@ -557,3 +557,66 @@ func TestVideoClips(t *testing.T) {
 		}
 	}
 }
+
+func TestShowStoryLayer(t *testing.T) {
+	ts, _ := testServer(t, nil)
+	_, ss := call(t, "POST", ts.URL+"/api/sessions", map[string]string{"ad_id": "neon-harbor"})
+	sid := ss["session"].(map[string]any)["id"].(string)
+
+	analyze := func(scene string) []any {
+		code, out := call(t, "POST", ts.URL+"/api/analyze", map[string]any{"session_id": sid, "scene_id": scene, "mode": "cached"})
+		if code != 200 {
+			t.Fatalf("analyze %s: %d %v", scene, code, out)
+		}
+		return out["detections"].([]any)
+	}
+	byCat := func(dets []any, cat string) map[string]any {
+		for _, d := range dets {
+			m := d.(map[string]any)
+			if m["candidate"].(map[string]any)["category"] == cat {
+				return m
+			}
+		}
+		t.Fatalf("no %s detection", cat)
+		return nil
+	}
+
+	d1 := analyze("neon-harbor-1")
+	if len(d1) != 3 {
+		t.Fatalf("scene 1 detections: %d", len(d1))
+	}
+	// Mira's jacket: exact match, with her story attached.
+	j := byCat(d1, "jacket")
+	st := j["story"].(map[string]any)
+	if j["match_level"] != "exact" || st["kind"] != "worn" || st["character"] != "Mira Vale" || st["show"] != "Neon Harbor" {
+		t.Fatalf("jacket: %v", j)
+	}
+	// The key prop is the official replica, and is labelled a prop.
+	p := byCat(d1, "pendant")
+	if p["match_level"] != "exact" || p["story"].(map[string]any)["kind"] != "prop" {
+		t.Fatalf("pendant: %v", p)
+	}
+	if id := p["exact"].(map[string]any)["product"].(map[string]any)["id"]; id != "tidewell-compass" {
+		t.Fatalf("pendant matched %v", id)
+	}
+
+	// A costume piece with no legible logo is never claimed as exact, but keeps its story.
+	d2 := analyze("neon-harbor-2")
+	cap := byCat(d2, "cap")
+	if cap["match_level"] == "exact" || cap["story"].(map[string]any)["character"] != "Joel Ashby" {
+		t.Fatalf("hidden-brand cap: %v", cap)
+	}
+
+	// Ordinary ads carry no story.
+	for _, d := range analyze("morning-run-1") {
+		if d.(map[string]any)["story"] != nil {
+			t.Fatalf("ad detection has a story: %v", d)
+		}
+	}
+
+	// Official merchandise is marked on the catalog entry.
+	_, prod := call(t, "GET", ts.URL+"/api/products/tidewell-compass", nil)
+	if prod["licensed"] != "Neon Harbor" {
+		t.Fatalf("licensed: %v", prod)
+	}
+}

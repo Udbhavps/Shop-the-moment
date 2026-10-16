@@ -23,6 +23,21 @@ type Placement struct {
 	X, Y, W   int
 	HideBrand bool // draw the item without a legible brand
 	Label     string
+	// Story layer (shows only): who wears or owns the item and why it matters.
+	// In production this would come from the studio's wardrobe and props
+	// metadata, keyed by timestamp. A vision model cannot know it.
+	Character string
+	Role      string // "worn" | "prop"
+	Moment    string
+}
+
+// Story is shown with a detection when the scene's metadata knows the item.
+type Story struct {
+	Kind      string `json:"kind"` // worn | prop
+	Character string `json:"character"`
+	Moment    string `json:"moment"`
+	Show      string `json:"show"`
+	Episode   string `json:"episode"`
 }
 
 type Expected struct {
@@ -42,6 +57,8 @@ type Scene struct {
 }
 
 type Ad struct {
+	Kind    string   `json:"kind"` // "ad" | "show"
+	Episode string   `json:"episode,omitempty"`
 	ID      string   `json:"id"`
 	Title   string   `json:"title"`
 	Brand   string   `json:"brand"`
@@ -83,8 +100,23 @@ func buildAds(cat *Catalog) []*Ad {
 				{ProductID: "arcline-city", Color: "black", X: 640, Y: 110, W: 470, HideBrand: true},
 			}},
 		}},
+		{ID: "neon-harbor", Kind: "show", Title: "Neon Harbor", Episode: "S1 E3 · The Tide Ledger", Seconds: 7, Scenes: []*Scene{
+			{ID: "neon-harbor-1", Title: "Dockside, 2 a.m.", Theme: [2]string{"#2c5a78", "#0b1426"}, Items: []Placement{
+				{ProductID: "northpeak-shell", Color: "black", X: 90, Y: 120, W: 500, Character: "Mira Vale", Role: "worn", Moment: "Mira wears it through the whole harbor chase."},
+				{ProductID: "tempo-one", Color: "black", X: 640, Y: 300, W: 300, Character: "Mira Vale", Role: "worn", Moment: "She checks it at 2:04, the minute the tide ledger goes missing."},
+				{ProductID: "tidewell-compass", Color: "gold", X: 960, Y: 150, W: 280, Character: "Mira Vale", Role: "prop", Moment: "The Harbor Compass: her father's pendant and the clue the whole season turns on."},
+			}},
+			{ID: "neon-harbor-2", Title: "The ledger room", Theme: [2]string{"#7a3f73", "#140d22"}, Items: []Placement{
+				{ProductID: "arcline-city", Color: "grey", X: 100, Y: 110, W: 470, Character: "Joel Ashby", Role: "worn", Moment: "Joel carries the stolen ledger in this pack."},
+				{ProductID: "dash-snapback", Color: "navy", X: 640, Y: 240, W: 330, HideBrand: true, Character: "Joel Ashby", Role: "worn", Moment: "Pulled low to hide from the dock cameras."},
+				{ProductID: "tidewell-compass", Color: "gold", X: 1000, Y: 300, W: 240, Character: "Mira Vale", Role: "prop", Moment: "Left behind in the ledger room, proof that Joel was never alone."},
+			}},
+		}},
 	}
 	for _, ad := range ads {
+		if ad.Kind == "" {
+			ad.Kind = "ad"
+		}
 		for _, sc := range ad.Scenes {
 			sc.AdID = ad.ID
 			sc.SVGURL = "/scenes/" + sc.ID + ".svg"
@@ -152,8 +184,12 @@ func RenderScene(cat *Catalog, ad *Ad, sc *Scene) string {
 	// lower third
 	fmt.Fprintf(&b, `<rect x="0" y="628" width="%d" height="92" fill="#0b0d12" opacity=".62"/>`, sceneW)
 	fmt.Fprintf(&b, `<text x="56" y="676" font-family="Helvetica, Arial, sans-serif" font-size="34" font-weight="800" fill="#fff">%s</text>`, xmlEscape(ad.Title))
-	fmt.Fprintf(&b, `<text x="56" y="705" font-family="Helvetica, Arial, sans-serif" font-size="20" fill="#d5d8e0">%s</text>`, xmlEscape(ad.Tagline))
-	fmt.Fprintf(&b, `<text x="%d" y="684" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="800" letter-spacing="3" text-anchor="end" fill="#fff" opacity=".85">%s</text>`, sceneW-56, strings.ToUpper(xmlEscape(ad.Brand)))
+	sub, right := ad.Tagline, ad.Brand
+	if ad.Kind == "show" {
+		sub, right = ad.Episode, sc.Title
+	}
+	fmt.Fprintf(&b, `<text x="56" y="705" font-family="Helvetica, Arial, sans-serif" font-size="20" fill="#d5d8e0">%s</text>`, xmlEscape(sub))
+	fmt.Fprintf(&b, `<text x="%d" y="684" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="800" letter-spacing="3" text-anchor="end" fill="#fff" opacity=".85">%s</text>`, sceneW-56, strings.ToUpper(xmlEscape(right)))
 	b.WriteString(`</svg>`)
 	return b.String()
 }
@@ -199,4 +235,33 @@ func CachedCandidates(cat *Catalog, sc *Scene) []Candidate {
 		out = append(out, c)
 	}
 	return out
+}
+
+// storyFor finds the story metadata for a detected item by matching its
+// category and colour to the scene's placements. It returns nil when the scene
+// metadata does not know the item (for example a live detection of something
+// the studio never tagged).
+func storyFor(cat *Catalog, ad *Ad, sc *Scene, c Candidate) *Story {
+	wantCat, wantColor := normCategory(c.Category), normColor(c.Color)
+	var byCategory *Placement
+	n := 0
+	for i := range sc.Items {
+		it := &sc.Items[i]
+		if it.Character == "" {
+			continue
+		}
+		category, _, _ := it.category(cat)
+		if category != wantCat {
+			continue
+		}
+		if it.Color == wantColor {
+			return &Story{Kind: it.Role, Character: it.Character, Moment: it.Moment, Show: ad.Title, Episode: ad.Episode}
+		}
+		byCategory = it
+		n++
+	}
+	if n == 1 {
+		return &Story{Kind: byCategory.Role, Character: byCategory.Character, Moment: byCategory.Moment, Show: ad.Title, Episode: ad.Episode}
+	}
+	return nil
 }
