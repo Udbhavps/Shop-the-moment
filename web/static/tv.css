@@ -29,6 +29,28 @@ body.tv { overflow: hidden; display: grid; place-items: center; background: #050
 #progress { position: absolute; left: 0; right: 0; bottom: 0; height: 8px; background: rgba(255, 255, 255, 0.14); }
 #progress i { display: block; height: 100%; width: 0; background: var(--focus); }
 
+/* player chrome: play/pause state, title and time, like a streaming app */
+#osd {
+  position: absolute; left: 56px; top: 132px; height: 76px; padding: 0 30px 0 12px; display: flex; align-items: center; gap: 20px;
+  border-radius: 38px; background: rgba(10, 13, 20, 0.62); color: #fff; font-size: 30px; font-weight: 600; cursor: pointer;
+  backdrop-filter: blur(6px); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+#osd .ic { width: 52px; height: 52px; border-radius: 50%; background: #fff; display: grid; place-items: center; }
+#osd .ic svg { width: 26px; height: 26px; fill: #0b0d12; }
+#osd .title { max-width: 560px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#osd .time { font-variant-numeric: tabular-nums; color: #d5d8e0; font-weight: 500; }
+#progress { height: 10px; }
+#progress i { position: relative; }
+#progress i::after { content: ""; position: absolute; right: -9px; top: -5px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35); }
+#flash {
+  position: absolute; left: 50%; top: 50%; width: 190px; height: 190px; margin: -95px 0 0 -95px; border-radius: 50%;
+  background: rgba(10, 13, 20, 0.6); display: grid; place-items: center; opacity: 0; pointer-events: none;
+}
+#flash svg { width: 88px; height: 88px; fill: #fff; }
+#flash.pop { animation: flashpop 0.7s ease-out; }
+@keyframes flashpop { 0% { opacity: 0; transform: scale(0.7); } 25% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.25); } }
+@media (prefers-reduced-motion: reduce) { #flash.pop { animation: none; } }
+
 /* detection outlines drawn on the paused frame (inside the scaled viewport) */
 #boxes { position: absolute; inset: 0; pointer-events: none; }
 .box { position: absolute; border-radius: 22px; border: 7px solid var(--exact); transition: opacity 0.25s; opacity: 0.4; }

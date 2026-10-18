@@ -170,6 +170,7 @@ func RenderScene(cat *Catalog, ad *Ad, sc *Scene) string {
 	fmt.Fprintf(&b, `<circle cx="1060" cy="150" r="90" fill="#fff" opacity=".18"/><circle cx="1060" cy="150" r="52" fill="#fff" opacity=".22"/>`)
 	fmt.Fprintf(&b, `<path d="M0 470 Q220 380 460 450 T920 430 T1280 400 L1280 720 L0 720 Z" fill="#000" opacity=".16"/>`)
 	fmt.Fprintf(&b, `<rect y="560" width="%d" height="160" fill="url(#floor)"/>`, sceneW)
+	b.WriteString(drawPeople(sc.ID))
 	for _, it := range sc.Items {
 		category, brand, _ := it.category(cat)
 		word := brand

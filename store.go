@@ -26,12 +26,13 @@ type CartItem struct {
 }
 
 type Order struct {
-	ID        string    `json:"id"`
-	Total     float64   `json:"total"`
-	Currency  string    `json:"currency"`
-	ItemCount int       `json:"item_count"`
-	PlacedAt  time.Time `json:"placed_at"`
-	Simulated bool      `json:"simulated"`
+	ID        string     `json:"id"`
+	Total     float64    `json:"total"`
+	Currency  string     `json:"currency"`
+	ItemCount int        `json:"item_count"`
+	Items     []CartItem `json:"items,omitempty"` // what this order contains, so the UI marks only those products as ordered
+	PlacedAt  time.Time  `json:"placed_at"`
+	Simulated bool       `json:"simulated"`
 }
 
 type Session struct {
@@ -145,6 +146,7 @@ func cloneSession(ss *Session) Session {
 	c.Cart = append([]CartItem{}, ss.Cart...)
 	if ss.Order != nil {
 		o := *ss.Order
+		o.Items = append([]CartItem(nil), ss.Order.Items...)
 		c.Order = &o
 	}
 	return c
@@ -203,6 +205,18 @@ func (s *Store) SetCart(id, cartID string, items []CartItem) (Session, error) {
 		}
 		ss.CartID = cartID
 		ss.Cart = append([]CartItem(nil), items...)
+		return nil
+	})
+}
+
+// NewPurchase retires a finished order so the shopper can buy something else in
+// the same session. The earlier order stays recorded as an event and in UCP.
+func (s *Store) NewPurchase(id string) (Session, error) {
+	return s.Mutate(id, func(ss *Session) error {
+		ss.Order = nil
+		ss.CheckoutID = ""
+		ss.CartID = ""
+		ss.Cart = nil
 		return nil
 	})
 }

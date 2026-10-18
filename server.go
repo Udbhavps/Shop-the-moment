@@ -454,8 +454,16 @@ func (s *Server) handleCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if ss.Order != nil {
-		writeErr(w, 400, errOrdered.Error())
-		return
+		if req.Delta <= 0 {
+			writeErr(w, 400, errOrdered.Error())
+			return
+		}
+		// A finished order must not mark other products as ordered: adding
+		// something new starts a fresh purchase in the same session.
+		if ss, err = s.store.NewPurchase(id); err != nil {
+			writeErr(w, 404, err.Error())
+			return
+		}
 	}
 	lines := s.ucp.CartLines(ss.CartID)
 	found := false
@@ -564,7 +572,7 @@ func (s *Server) placeOrderLocked(id, handler, token, base, channel string) (Ses
 		count += l.Quantity
 	}
 	total := done.Totals[len(done.Totals)-1].Amount
-	ss, err = s.store.SetOrder(id, co.ID, Order{ID: done.Order.ID, Total: float64(total) / 100, Currency: s.cat.Currency, ItemCount: count, Simulated: true})
+	ss, err = s.store.SetOrder(id, co.ID, Order{ID: done.Order.ID, Total: float64(total) / 100, Currency: s.cat.Currency, ItemCount: count, Items: append([]CartItem(nil), ss.Cart...), Simulated: true})
 	if err != nil {
 		return ss, 400, err
 	}

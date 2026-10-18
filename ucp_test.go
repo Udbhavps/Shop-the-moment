@@ -242,8 +242,20 @@ func TestSessionCartRunsOnUCP(t *testing.T) {
 	if !tvPurchase {
 		t.Fatal("purchase event should record the TV channel")
 	}
-	if code, _ = call(t, "POST", cartURL, map[string]any{"product_id": "dash-lite", "delta": 1}); code != 400 {
-		t.Fatalf("cart must be locked after the order, got %d", code)
+	if items, _ := ord["items"].([]any); len(items) != 1 || items[0].(map[string]any)["product_id"] != "hydra-steel" {
+		t.Fatalf("the order must list what it contains, got %v", ord["items"])
+	}
+	// A placed order stays locked: it cannot be edited down.
+	if code, _ = call(t, "POST", cartURL, map[string]any{"product_id": "hydra-steel", "color": "orange", "delta": -1}); code != 400 {
+		t.Fatalf("a placed order must not be edited, got %d", code)
+	}
+	// Adding something else starts a fresh purchase and must not inherit the old order.
+	code, v = call(t, "POST", cartURL, map[string]any{"product_id": "dash-lite", "delta": 1})
+	if code != 200 {
+		t.Fatalf("a new item after an order should start a new purchase, got %d", code)
+	}
+	if sess := v["session"].(map[string]any); sess["order"] != nil {
+		t.Fatalf("the new purchase must not carry the old order: %v", sess["order"])
 	}
 }
 

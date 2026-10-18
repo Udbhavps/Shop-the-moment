@@ -228,6 +228,7 @@ const analyzePrompt = `You are the product-recognition step of a shoppable-TV pr
 Look at this single frame from a TV ad or show and list up to 4 distinct consumer products that are clearly visible and could plausibly be bought (shoes, bags, headphones, watches, sunglasses, bottles, jackets, caps, pendants and necklaces, and similar).
 
 Rules:
+- People are not products. Do not report a person, their skin, hair or plain unbranded clothing. Report only items that are shown as products.
 - Report only what you can see. Do not guess prices, model names, product IDs or availability.
 - brand_text: copy a brand name or logo text ONLY if it is legible in the frame; otherwise use an empty string. Never infer a brand from the product's style. Small printed wordmarks count when you can actually read them (watch faces, bag panels, cap fronts, jacket chests, pendant medallions, bottle labels, headbands): look closely before deciding that none is legible.
 - category must be one of: sneakers, backpack, headphones, smartwatch, sunglasses, water_bottle, jacket, cap, pendant, other.

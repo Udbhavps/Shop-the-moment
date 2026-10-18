@@ -119,6 +119,29 @@
     ev('ad_view', { ad_id: ad().id });
   }
 
+  const ICON = {
+    play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.5h4.5v15H6zM13.5 4.5H18v15h-4.5z"/></svg>',
+  };
+  const mmss = (ms) => { const t = Math.max(0, Math.round(ms / 1000)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
+
+  // The player chrome shows what a viewer expects: state icon, title and time.
+  function updateOsd(t) {
+    if (!S.ads.length) return;
+    const secs = ad().seconds_per_scene * 1000, total = ad().scenes.length;
+    const icon = S.paused ? ICON.play : ICON.pause; // the icon names the action a press would take
+    if ($('osdicon').dataset.s !== String(S.paused)) { $('osdicon').innerHTML = icon; $('osdicon').dataset.s = String(S.paused); }
+    $('osdtitle').textContent = ad().kind === 'show' ? `${ad().title} · ${ad().episode}` : ad().title;
+    const cur = S.sceneIdx * secs + Math.min(t, secs);
+    $('osdtime').textContent = `${mmss(cur)} / ${mmss(secs * total)}`;
+  }
+
+  function flashIcon(paused) {
+    const f = $('flash');
+    f.innerHTML = paused ? ICON.pause : ICON.play;
+    f.classList.remove('pop'); void f.offsetWidth; f.classList.add('pop');
+  }
+
   function tick() {
     if (!S.ads.length || S.paused) return;
     const secs = ad().seconds_per_scene * 1000;
@@ -127,14 +150,18 @@
     const t = playing ? v.currentTime * 1000 : performance.now() - S.sceneStart;
     const total = ad().scenes.length;
     $('progress').firstElementChild.style.width = (((S.sceneIdx + Math.min(t / secs, 1)) / total) * 100).toFixed(1) + '%';
+    updateOsd(t);
     if (t >= secs - 60 || v.ended) showScene((S.sceneIdx + 1) % total);
   }
   setInterval(tick, 100);
 
   function pause(on) {
+    const changed = S.paused !== on;
     S.paused = on;
     $('screen').classList.toggle('paused', on);
     const v = S.layers[S.layer];
+    updateOsd(v.currentTime * 1000 || 0);
+    if (changed) flashIcon(on);
     if (on) {
       v.pause();
       // Pausing during the entrance would freeze products mid-slide, so settle on the finished frame.
@@ -358,6 +385,12 @@
     focusSel('.btn.primary');
   }
 
+  // True only when the placed order contains this exact product and colour.
+  function isOrdered(productId, color) {
+    const o = S.session && S.session.order;
+    return !!(o && (o.items || []).some((i) => i.product_id === productId && i.color === color));
+  }
+
   function renderDetail() {
     const { product: p, color, level } = S.detail;
     $('ptitle').textContent = level === 'exact' ? 'Exact match' : level === 'similar' ? 'Similar item' : 'Product';
@@ -366,7 +399,7 @@
       'aria-pressed': String(v.color === color), disabled: !v.in_stock,
       onclick: () => { S.detail.color = v.color; renderDetail(); focusSel(`.swatch[aria-label^="${v.color}"]`); },
     }));
-    const ordered = !!(S.session && S.session.order);
+    const ordered = isOrdered(p.id, color);
     const queued = S.session && S.session.selected && S.session.selected.some((s) => s.product_id === p.id && s.color === color);
     $('body').replaceChildren(h('div', { class: `detail ${level === 'similar' ? 'similar' : ''}` },
       h('img', { src: img(p.id, color), alt: `${p.name} in ${color}`, width: 230, height: 230 }),
@@ -408,7 +441,7 @@
   // The TV also offers a simulated card so the flow works with no phone at all.
   async function buyNow() {
     const { product, color } = S.detail;
-    if (S.session.order) { openPay(); return; }
+    if (isOrdered(product.id, color)) { openPay(); return; }
     try {
       await api(`/api/sessions/${S.session.id}/cart`, { product_id: product.id, color, delta: 1, channel: 'tv' });
       await refreshSession();
@@ -710,6 +743,7 @@
   });
 
   $('invite').addEventListener('click', openPanel);
+  $('osd').addEventListener('click', () => (S.panelOpen ? closePanel() : openPanel()));
   $('screen').addEventListener('click', () => { if (!S.panelOpen) openPanel(); });
   $('phonebtn').addEventListener('click', openHandoff);
   $('handdone').addEventListener('click', closeHandoff);

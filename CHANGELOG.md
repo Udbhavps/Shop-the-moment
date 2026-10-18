@@ -3,6 +3,15 @@
 Versioning: [Semantic Versioning](https://semver.org). Each release is a git tag `vX.Y.Z` and a section below.
 Pre-1.0: minor versions may change behaviour; patch versions are fixes only.
 
+## [0.4.3] - 2026-10-18
+
+### Fixed
+- After one order was placed, every product's detail showed "Order placed", and nothing else could be bought in that session. The order now records its items, only those show "Order placed", and adding a different product starts a new purchase. A placed order still cannot be edited.
+
+### Changed
+- The sample clips now show people (a runner, hikers, a listener, figures on the dock), drawn behind the products. The vision prompt tells the model that people and plain clothing are not products.
+- The TV player now has a play/pause chip with the title and time, a centre icon when the state changes, and a scrubber, so the sample reads as video rather than a still ad.
+
 ## [0.4.2] - 2026-10-17
 
 ### Fixed
